@@ -1,0 +1,28 @@
+# Dependances
+node_modules/
+
+# Secrets (JAMAIS dans git)
+.env
+
+# Logs & audit (on fournira des extraits, pas le fichier)
+*.log
+audit.log
+logs/
+
+# Base de donnees local / fixtures
+*.sql
+*.dump
+
+# Tests & couverture
+coverage/
+.nyc_output/
+
+# Editeur / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Certificats locaux
+*.pem
+*.key
+*.crt
