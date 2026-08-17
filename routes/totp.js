@@ -94,7 +94,9 @@ router.post("/2fa/verify", requirePending2FA, async (req, res, next) => {
       return res.redirect("/2fa/setup");
     }
 
-    const user = await User.findByPk(pending.userId);
+    // include Role : la promotion doit connaitre le VRAI role
+    // (sans lui, le fallback stagiaire s'appliquerait a tort)
+    const user = await User.findByPk(pending.userId, { include: Role });
     const ok = user && (await codeValide(req.body.token, pending.secret));
 
     if (!ok) {
