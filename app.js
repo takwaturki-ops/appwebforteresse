@@ -18,6 +18,7 @@ const session = require("express-session");
 const connectPgSimple = require("connect-pg-simple");
 
 const authRoutes = require("./routes/auth");
+const totpRoutes = require("./routes/totp");
 const { requireAuth } = require("./middleware/auth");
 
 const app = express();
@@ -25,11 +26,21 @@ const PORT = process.env.PORT || 3000;
 const EST_PRODUCTION = process.env.NODE_ENV === "production";
 
 // -------------------------------------------------------------
-// 1. HELMET - en-tetes HTTP de securite (Phase 5 : personnalisation)
-// Entre autres : masque X-Powered-By (divulgation decouverte en Lecon 2),
-// CSP stricte, X-Frame-Options, etc.
+// 1. HELMET - en-tetes HTTP de securite
+// Masque X-Powered-By, CSP stricte, X-Frame-Options, etc.
+// img-src autorise "data:" uniquement pour le QR code d'association
+// 2FA (genere cote serveur par nos soins, pas une donnee externe).
 // -------------------------------------------------------------
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "img-src": ["'self'", "data:"],
+      },
+    },
+  })
+);
 
 // -------------------------------------------------------------
 // 2. PARSING - traduit les formulaires HTML vers req.body (Lecon 4)
@@ -92,7 +103,8 @@ app.use((req, res, next) => {
 // -------------------------------------------------------------
 // 6. ROUTES
 // -------------------------------------------------------------
-app.use("/", authRoutes); // /login, /logout
+app.use("/", authRoutes);   // /login, /logout (etape 1 : mot de passe)
+app.use("/", totpRoutes);   // /2fa/*, /login/totp (etape 2 : code TOTP)
 
 app.get("/dashboard", requireAuth, (req, res) => {
   res.render("dashboard");

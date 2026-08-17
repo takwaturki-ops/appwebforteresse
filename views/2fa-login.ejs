@@ -1,0 +1,23 @@
+<%- include("partials/header", { titre: "Verification 2FA" }) %>
+
+<div class="carte">
+  <h1>Double authentification</h1>
+
+  <p>Ouvrez votre application d'authentification et saisissez le code
+     &agrave; 6 chiffres correspondant &agrave; votre compte.</p>
+
+  <% if (erreur) { %>
+    <p class="alerte alerte-erreur"><%= erreur %></p>
+  <% } %>
+
+  <form method="POST" action="/login/totp">
+    <label for="token">Code &agrave; 6 chiffres</label>
+    <input type="text" id="token" name="token" inputmode="numeric"
+           pattern="[0-9]{6}" maxlength="6" required
+           autocomplete="one-time-code" placeholder="123456"
+           autofocus>
+    <button type="submit">Verifier</button>
+  </form>
+</div>
+
+<%- include("partials/footer") %>

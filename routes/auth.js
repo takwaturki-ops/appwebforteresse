@@ -50,12 +50,18 @@ router.post("/login", async (req, res) => {
       return res.status(401).render("login", { erreur: erreurGenerique });
     }
 
-    // Succes : identite et role entres en session (cookie signe, HttpOnly)
-    req.session.userId = user.id;
-    req.session.username = user.username;
-    req.session.role = user.Role ? user.Role.name : "stagiaire";
+    // Mot de passe VALIDE - etape 1 sur 2.
+    // On ne cree PAS encore la session complete : seulement une
+    // demi-session (pending2fa) en attendant le code TOTP.
+    // needsSetup : true si la 2FA n'a jamais ete associee
+    // (premiere connexion -> passage par le QR code).
+    req.session.pending2fa = {
+      userId: user.id,
+      username: user.username,
+      needsSetup: !user.totpEnabled,
+    };
 
-    return res.redirect("/dashboard");
+    return res.redirect(user.totpEnabled ? "/login/totp" : "/2fa/setup");
   } catch (err) {
     // Erreur technique : message generique aussi (pas de fuite d'information)
     console.error("Erreur pendant le login :", err.message);

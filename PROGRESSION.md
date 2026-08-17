@@ -26,6 +26,9 @@
 - [x] Phase 2 : bcrypt (cout 12) + utilisateurs en DB (Sequelize) + sessions en
       PostgreSQL (connect-pg-simple) + test injection SQL bloque + session survivante
 - [ ] Phase 3 : TOTP 2FA + QR code
+- [x] Phase 3 : TOTP 2FA (otplib v13 + QR code) - login en 2 etapes,
+      demi-session pending2fa, session regenerate a la promotion (anti-fixation),
+      codes mal formes -> 401 (validation format avant verify)
 - [ ] Phase 4 : RBAC 3 roles + 403 + alertes
 - [ ] Phase 5 : CSRF + helmet + cookies durcis
 - [ ] Phase 6 : rate limiting login
@@ -34,6 +37,7 @@
 - [ ] Phase 9 : n8n Azure + tests + livrables
 
 ## Point de reprise
-Prochaine etape : Phase 3 - TOTP 2FA (QR code) ;
-revoir au passage : notion de hash/salt/cout bcrypt, store de session
+Prochaine etape : Phase 4 - RBAC (3 roles, middleware requireRole, 403 + alertes) ;
+cote utilisateur : faire la VRAIE association 2FA avec le telephone
+(screenshots = livrable officiel)
 

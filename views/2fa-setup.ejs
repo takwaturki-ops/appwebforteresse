@@ -1,0 +1,40 @@
+<%- include("partials/header", { titre: "Activation 2FA" }) %>
+
+<div class="carte">
+  <h1>Activer la double authentification</h1>
+
+  <ol class="etapes">
+    <li>
+      Ouvrez votre application d'authentification
+      (Google Authenticator, Bitwarden...) et choisissez
+      &laquo; Ajouter un compte &raquo; puis &laquo; Scanner un QR code &raquo;.
+    </li>
+    <li>
+      <p>Scannez ce code :</p>
+      <img class="qr" src="<%= qrDataUrl %>" alt="QR code d'association TOTP" width="240" height="240">
+    </li>
+    <li>
+      <p>Scan impossible ? Saisissez cette cle manuellement
+      (type : bas&eacute; sur le temps, 6 chiffres, 30 s) :</p>
+      <code class="secret" id="totp-secret"><%= secret %></code>
+    </li>
+    <li>
+      <p>Entrez le code &agrave; 6 chiffres affich&eacute; par l'application
+      pour confirmer l'association :</p>
+
+      <% if (erreur) { %>
+        <p class="alerte alerte-erreur"><%= erreur %></p>
+      <% } %>
+
+      <form method="POST" action="/2fa/verify">
+        <label for="token">Code de v&eacute;rification</label>
+        <input type="text" id="token" name="token" inputmode="numeric"
+               pattern="[0-9]{6}" maxlength="6" required
+               autocomplete="one-time-code" placeholder="123456">
+        <button type="submit">Valider l'association</button>
+      </form>
+    </li>
+  </ol>
+</div>
+
+<%- include("partials/footer") %>
