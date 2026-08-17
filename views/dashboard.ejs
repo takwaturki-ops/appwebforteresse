@@ -8,7 +8,8 @@
     Meme si un identifiant piege etait stocke, il serait affiche
     comme du texte, jamais execute (defense XSS, Lecon 5).
   -->
-  <p>Bonjour <strong><%= session.userId %></strong>, vous etes connecte.</p>
+  <p>Bonjour <strong><%= session.username %></strong>,
+     vous etes connecte avec le role <strong><%= session.role %></strong>.</p>
 
   <h2>Etat de l'infrastructure (demo)</h2>
   <table>

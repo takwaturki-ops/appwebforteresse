@@ -15,6 +15,7 @@ const express = require("express");
 const path = require("path");
 const helmet = require("helmet");
 const session = require("express-session");
+const connectPgSimple = require("connect-pg-simple");
 
 const authRoutes = require("./routes/auth");
 const { requireAuth } = require("./middleware/auth");
@@ -43,6 +44,9 @@ app.use(express.static(path.join(__dirname, "public")));
 // -------------------------------------------------------------
 // 4. SESSIONS - identite de l'utilisateur entre les requetes
 //
+// Store PostgreSQL (connect-pg-simple) : les sessions survivent
+// aux redemarrages du serveur et peuvent etre revoquees proprement.
+//
 // Durcissement du cookie de session (cahier des charges) :
 //   httpOnly  : interdit l'acces au cookie depuis JavaScript
 //               (defense contre le vol de session par XSS)
@@ -51,13 +55,15 @@ app.use(express.static(path.join(__dirname, "public")));
 //   secure    : cookie envoye uniquement en HTTPS (desactive en dev
 //               local car pas de certificat - actif en production)
 //   maxAge    : expiration apres 30 minutes d'inactivite
-//
-// NB : le store est en memoire pour l'instant ; la Phase 2 le
-// branchera sur PostgreSQL (connect-pg-simple) pour survivre aux
-// redemarrages.
 // -------------------------------------------------------------
+const PgSessionStore = connectPgSimple(session);
+
 app.use(
   session({
+    store: new PgSessionStore({
+      conString: process.env.DATABASE_URL,
+      tableName: "sessions",
+    }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,

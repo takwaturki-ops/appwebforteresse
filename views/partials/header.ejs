@@ -11,7 +11,7 @@
     <span class="logo">Forteresse</span>
     <nav>
       <% if (session && session.userId) { %>
-        <span>Connecte : <%= session.userId %></span>
+        <span>Connecte : <%= session.username %> (<%= session.role %>)</span>
         <form method="POST" action="/logout" class="inline">
           <button type="submit" class="lien">Deconnexion</button>
         </form>

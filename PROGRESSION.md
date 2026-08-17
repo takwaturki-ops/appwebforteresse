@@ -23,7 +23,8 @@
 ## Projet Forteresse (phases)
 - [x] Phase 0 : PostgreSQL + git + GitHub
 - [x] Phase 1 : socle Express + page de connexion (login en dur, SANS bcrypt ni DB)
-- [ ] Phase 2 : bcrypt + utilisateurs en DB (Sequelize) + session PostgreSQL
+- [x] Phase 2 : bcrypt (cout 12) + utilisateurs en DB (Sequelize) + sessions en
+      PostgreSQL (connect-pg-simple) + test injection SQL bloque + session survivante
 - [ ] Phase 3 : TOTP 2FA + QR code
 - [ ] Phase 4 : RBAC 3 roles + 403 + alertes
 - [ ] Phase 5 : CSRF + helmet + cookies durcis
@@ -33,5 +34,6 @@
 - [ ] Phase 9 : n8n Azure + tests + livrables
 
 ## Point de reprise
-Prochaine etape : Lecon 6 (bcrypt) puis branchement DB Sequelize sur le login
+Prochaine etape : Phase 3 - TOTP 2FA (QR code) ;
+revoir au passage : notion de hash/salt/cout bcrypt, store de session
 
