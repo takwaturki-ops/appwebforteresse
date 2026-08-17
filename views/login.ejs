@@ -1,0 +1,28 @@
+<%- include("partials/header", { titre: "Connexion" }) %>
+
+<div class="carte">
+  <h1>Connexion</h1>
+
+  <% if (erreur) { %>
+    <p class="alerte alerte-erreur"><%= erreur %></p>
+  <% } %>
+
+  <!--
+    Formulaire de connexion.
+    Les protections CSRF (jeton dans le formulaire) seront ajoutees
+    a la Phase 5 - pour l'instant on pose les fondations.
+  -->
+  <form method="POST" action="/login">
+    <label for="username">Identifiant</label>
+    <input type="text" id="username" name="username"
+           required maxlength="50" autocomplete="username">
+
+    <label for="password">Mot de passe</label>
+    <input type="password" id="password" name="password"
+           required maxlength="128" autocomplete="current-password">
+
+    <button type="submit">Se connecter</button>
+  </form>
+</div>
+
+<%- include("partials/footer") %>

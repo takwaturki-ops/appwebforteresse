@@ -1,0 +1,22 @@
+<%- include("partials/header", { titre: "Tableau de bord" }) %>
+
+<div class="carte">
+  <h1>Tableau de bord</h1>
+
+  <!--
+    NB : <%= session.userId %> est echappe automatiquement par EJS.
+    Meme si un identifiant piege etait stocke, il serait affiche
+    comme du texte, jamais execute (defense XSS, Lecon 5).
+  -->
+  <p>Bonjour <strong><%= session.userId %></strong>, vous etes connecte.</p>
+
+  <h2>Etat de l'infrastructure (demo)</h2>
+  <table>
+    <tr><th>Service</th><th>Etat</th></tr>
+    <tr><td>Serveur web</td><td>Operationnel</td></tr>
+    <tr><td>Base de donnees</td><td>A brancher (Phase 2)</td></tr>
+    <tr><td>Double authentification</td><td>A implementer (Phase 3)</td></tr>
+  </table>
+</div>
+
+<%- include("partials/footer") %>
