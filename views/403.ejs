@@ -1,0 +1,20 @@
+<%- include("partials/header", { titre: "Acces refuse" }) %>
+
+<div class="carte erreur-403">
+  <h1>403 - Acc&egrave;s refus&eacute;</h1>
+
+  <p>Vous n'avez pas les privil&egrave;ges n&eacute;cessaires pour acc&eacute;der
+     &agrave; <code><%= chemin %></code>.</p>
+
+  <p>Votre role : <span class="badge badge-<%= roleUtilisateur %>"><%= roleUtilisateur %></span>
+     &mdash; role(s) requis : <% rolesRequis.forEach(function(r, i) { %>
+       <span class="badge badge-<%= r %>"><%= r %></span><%= i < rolesRequis.length - 1 ? ", " : "" %>
+     <% }); %></p>
+
+  <p class="muted">Cette tentative a &eacute;t&eacute; enregistr&eacute;e dans le journal
+     d'audit du syst&egrave;me.</p>
+
+  <a class="btn-lien" href="/dashboard">Retour au tableau de bord</a>
+</div>
+
+<%- include("partials/footer") %>

@@ -1,0 +1,39 @@
+<%- include("../partials/header", { titre: "Utilisateurs" }) %>
+
+<div class="carte">
+  <h1>Utilisateurs</h1>
+
+  <% if (typeof erreur !== "undefined" && erreur) { %>
+    <p class="alerte alerte-erreur"><%= erreur %></p>
+  <% } %>
+
+  <p><a class="btn-lien" href="/admin/users/new">+ Nouvel utilisateur</a></p>
+
+  <table>
+    <tr><th>Identifiant</th><th>Email</th><th>Role</th><th>2FA</th><th>Actions</th></tr>
+    <% users.forEach(function(u) { %>
+      <tr>
+        <td><%= u.username %><% if (u.id === monId) { %> <em>(vous)</em><% } %></td>
+        <td><%= u.email %></td>
+        <td><span class="badge badge-<%= u.Role.name %>"><%= u.Role.name %></span></td>
+        <td><%= u.totpEnabled ? "active" : "non configuree" %></td>
+        <td>
+          <% if (session.role === "superadmin" && u.id !== monId) { %>
+            <form method="POST" action="/admin/users/<%= u.id %>/role" class="inline">
+              <select name="role">
+                <option value="stagiaire" <%= u.Role.name === "stagiaire" ? "selected" : "" %>>stagiaire</option>
+                <option value="admin" <%= u.Role.name === "admin" ? "selected" : "" %>>admin</option>
+                <option value="superadmin" <%= u.Role.name === "superadmin" ? "selected" : "" %>>superadmin</option>
+              </select>
+              <button type="submit" class="petit">Changer</button>
+            </form>
+          <% } else { %>
+            <span class="muted">-</span>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+  </table>
+</div>
+
+<%- include("../partials/footer") %>

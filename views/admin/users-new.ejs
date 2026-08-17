@@ -1,0 +1,37 @@
+<%- include("../partials/header", { titre: "Nouvel utilisateur" }) %>
+
+<div class="carte">
+  <h1>Creer un utilisateur</h1>
+
+  <% if (erreurs) { erreurs.forEach(function(e) { %>
+    <p class="alerte alerte-erreur"><%= e.msg %></p>
+  <% }); } %>
+
+  <form method="POST" action="/admin/users">
+    <label for="username">Identifiant</label>
+    <input type="text" id="username" name="username" required maxlength="50"
+           pattern="[a-zA-Z0-9_.\-]{3,50}"
+           value="<%= typeof valeurs.username !== "undefined" ? valeurs.username : "" %>">
+
+    <label for="email">Email</label>
+    <input type="email" id="email" name="email" required maxlength="255"
+           value="<%= typeof valeurs.email !== "undefined" ? valeurs.email : "" %>">
+
+    <label for="password">Mot de passe initial (12 caracteres minimum)</label>
+    <input type="password" id="password" name="password" required minlength="12" maxlength="128">
+    <p class="muted">Le mot de passe est hache bcrypt (cout 12) ; il ne sera
+       jamais visible ni stocke en clair. L'utilisateur configurera sa 2FA
+       a sa premiere connexion.</p>
+
+    <label for="role">Role</label>
+    <select id="role" name="role">
+      <% rolesChoisissables.forEach(function(r) { %>
+        <option value="<%= r %>"><%= r %></option>
+      <% }); %>
+    </select>
+
+    <button type="submit">Creer le compte</button>
+  </form>
+</div>
+
+<%- include("../partials/footer") %>

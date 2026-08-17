@@ -15,9 +15,15 @@
   <table>
     <tr><th>Service</th><th>Etat</th></tr>
     <tr><td>Serveur web</td><td>Operationnel</td></tr>
-    <tr><td>Base de donnees</td><td>A brancher (Phase 2)</td></tr>
-    <tr><td>Double authentification</td><td>A implementer (Phase 3)</td></tr>
+    <tr><td>Base de donnees</td><td>Connectee (PostgreSQL)</td></tr>
+    <tr><td>Double authentification</td><td>Activee (TOTP)</td></tr>
+    <tr><td>Controle d'acces</td><td>RBAC - 3 roles</td></tr>
   </table>
+
+  <% if (session.role === "admin" || session.role === "superadmin") { %>
+    <h2>Administration</h2>
+    <p><a class="btn-lien" href="/admin/users">Gerer les utilisateurs</a></p>
+  <% } %>
 </div>
 
 <%- include("partials/footer") %>

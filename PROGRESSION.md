@@ -30,6 +30,11 @@
       demi-session pending2fa, session regenerate a la promotion (anti-fixation),
       codes mal formes -> 401 (validation format avant verify)
 - [ ] Phase 4 : RBAC 3 roles + 403 + alertes
+- [x] Phase 4 : RBAC - middleware requireRole (403 + alerte audit ACCESS_DENIED),
+      gestion utilisateurs (/admin/users : liste, creation avec validation
+      express-validator, changement de role superadmin seul, anti-self-change,
+      escalation bloquee cote serveur), comptes demo stagetest/admintest
+      (creds dans comptes-demo.local.md, hors git)
 - [ ] Phase 5 : CSRF + helmet + cookies durcis
 - [ ] Phase 6 : rate limiting login
 - [ ] Phase 7 : audit.log JSON
@@ -37,7 +42,7 @@
 - [ ] Phase 9 : n8n Azure + tests + livrables
 
 ## Point de reprise
-Prochaine etape : Phase 4 - RBAC (3 roles, middleware requireRole, 403 + alertes) ;
-cote utilisateur : faire la VRAIE association 2FA avec le telephone
-(screenshots = livrable officiel)
+Prochaine etape : Phase 5 - CSRF (csrf-csrf sur tous les formulaires) ;
+attention : la session navigateur ouverte avant le fix du 2026-08-17
+a un role stale -> se deconnecter/reconnecter pour la refraichir
 

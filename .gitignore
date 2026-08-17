@@ -3,6 +3,7 @@ node_modules/
 
 # Secrets (JAMAIS dans git)
 .env
+comptes-demo.local.md
 
 # Logs & audit (on fournira des extraits, pas le fichier)
 *.log

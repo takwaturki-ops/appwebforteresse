@@ -19,6 +19,7 @@ const connectPgSimple = require("connect-pg-simple");
 
 const authRoutes = require("./routes/auth");
 const totpRoutes = require("./routes/totp");
+const adminRoutes = require("./routes/admin");
 const { requireAuth } = require("./middleware/auth");
 
 const app = express();
@@ -105,6 +106,7 @@ app.use((req, res, next) => {
 // -------------------------------------------------------------
 app.use("/", authRoutes);   // /login, /logout (etape 1 : mot de passe)
 app.use("/", totpRoutes);   // /2fa/*, /login/totp (etape 2 : code TOTP)
+app.use("/", adminRoutes);  // /admin/* (RBAC : requireRole par route)
 
 app.get("/dashboard", requireAuth, (req, res) => {
   res.render("dashboard");
