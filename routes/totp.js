@@ -72,9 +72,13 @@ router.get("/2fa/setup", requirePending2FA, async (req, res, next) => {
     }
 
     // Secret genere cote serveur, memorise dans la DEMI-session.
+    // Genere UNE SEULE fois : un rafraichissement de la page (F5)
+    // reutilise le meme secret et le meme QR. Sans cette precaution,
+    // tout rafraichissement entre le scan et la saisie invaliderait
+    // le QR deja scanne par le telephone.
     // Il ne sera ecrit en base qu'apres confirmation par un code valide,
     // ce qui garantit que le telephone a bien scanne le bon QR.
-    const secret = generateSecret({ length: 32 });
+    const secret = pending.secret || generateSecret({ length: 32 });
     pending.secret = secret;
 
     const uri = generateURI({ issuer: ISSUER, label: pending.username, secret });
