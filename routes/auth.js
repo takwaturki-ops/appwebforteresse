@@ -4,6 +4,11 @@ const router = express.Router();
 
 // Modeles Sequelize : requetes parametrees -> defense injection SQL (OWASP)
 const { User, Role } = require("../models");
+const { journaliserRequete } = require("../utils/audit");
+const {
+  gardeAntiBruteForce,
+  echecLogin,
+} = require("../middleware/ratelimit");
 
 // Empreinte bcrypt factice (format valide, cout 12, meme duree de calcul).
 // Utilisee quand le compte n'existe pas : le temps de reponse reste
@@ -21,11 +26,31 @@ router.get("/login", (req, res) => {
 });
 
 // POST /login - traite le formulaire (utilisateurs en base + bcrypt)
-router.post("/login", async (req, res) => {
+// gardeAntiBruteForce : IP bloquee apres 5 echecs -> 429 sans executer
+// la route (le mot de passe n'est meme pas examine).
+router.post("/login", gardeAntiBruteForce, async (req, res) => {
   const { username, password } = req.body;
 
   // Message d'erreur VOLONTAIREMENT generique (anti enumeration de comptes)
   const erreurGenerique = "Identifiants incorrects.";
+
+  // Refus unifie : audit LOGIN_FAILED + compteur brute force.
+  // La RAISON precise ne va QUE dans l'audit (interne), jamais dans
+  // la reponse visible (sinon enumeration de comptes).
+  const refuser = (raison) => {
+    journaliserRequete(req, {
+      action: "LOGIN_FAILED",
+      level: "warning",
+      username: username || null,
+      details: { etape: "mot_de_passe", raison },
+    });
+    if (echecLogin(req)) {
+      // 5e echec : blocage 15 minutes (cahier des charges)
+      res.set("Retry-After", "900");
+      return res.status(429).render("429", { secondes: 900 });
+    }
+    return res.status(401).render("login", { erreur: erreurGenerique });
+  };
 
   try {
     // Recherche parametree via l'ORM : la valeur voyage separement du SQL,
@@ -38,7 +63,7 @@ router.post("/login", async (req, res) => {
     if (!user) {
       // Compte inconnu : comparaison factice (duree identique) + meme erreur
       await bcrypt.compare(String(password ?? ""), HASH_FACTICE);
-      return res.status(401).render("login", { erreur: erreurGenerique });
+      return refuser("compte_inconnu");
     }
 
     // verifyPassword = bcrypt.compare : on re-hache la tentative avec le
@@ -47,7 +72,9 @@ router.post("/login", async (req, res) => {
     const motDePasseOk = await user.verifyPassword(String(password ?? ""));
 
     if (!user.isActive || !motDePasseOk) {
-      return res.status(401).render("login", { erreur: erreurGenerique });
+      return refuser(
+        user.isActive ? "mot_de_passe_incorrect" : "compte_desactive"
+      );
     }
 
     // Mot de passe VALIDE - etape 1 sur 2.
@@ -55,6 +82,10 @@ router.post("/login", async (req, res) => {
     // demi-session (pending2fa) en attendant le code TOTP.
     // needsSetup : true si la 2FA n'a jamais ete associee
     // (premiere connexion -> passage par le QR code).
+    // NB : le compteur brute force N'EST PAS remis a zero ici - ce
+    // sera fait apres le code TOTP valide (succesLogin), sinon un
+    // attaquant avec le bon mot de passe pourrait essayer les codes
+    // TOTP a l'infini.
     req.session.pending2fa = {
       userId: user.id,
       username: user.username,
@@ -73,6 +104,11 @@ router.post("/login", async (req, res) => {
 
 // POST /logout - detruit la session puis redirige
 router.post("/logout", (req, res) => {
+  journaliserRequete(req, {
+    action: "LOGOUT",
+    level: "info",
+    username: req.session ? req.session.username : null,
+  });
   req.session.destroy(() => {
     res.redirect("/login");
   });

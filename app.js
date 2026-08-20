@@ -17,6 +17,7 @@ const helmet = require("helmet");
 const session = require("express-session");
 const connectPgSimple = require("connect-pg-simple");
 const cookieParser = require("cookie-parser");
+const rateLimit = require("express-rate-limit");
 const { doubleCsrf } = require("csrf-csrf");
 
 const authRoutes = require("./routes/auth");
@@ -43,6 +44,24 @@ app.use(
         "img-src": ["'self'", "data:"],
       },
     },
+  })
+);
+
+// -------------------------------------------------------------
+// 1bis. LIMITEUR GLOBAL DE REQUETES (Phase 6)
+// Toute l'application : 300 requetes / 15 min / IP. Un humain
+// naviguant normalement reste tres en dessous ; un script qui
+// bombarde le serveur (flooding) est coupe vite.
+// Complementaire au garde anti brute-force (middleware/ratelimit.js)
+// qui, lui, ne compte que les ECHECS de login (5 -> blocage 15 min).
+// -------------------------------------------------------------
+app.use(
+  rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: "429 - Trop de requetes, reessayez plus tard.",
   })
 );
 

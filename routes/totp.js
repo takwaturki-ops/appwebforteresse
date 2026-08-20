@@ -20,6 +20,12 @@ const QRCode = require("qrcode");
 const router = express.Router();
 const { User, Role } = require("../models");
 const { requirePending2FA } = require("../middleware/auth");
+const {
+  gardeAntiBruteForce,
+  echecLogin,
+  succesLogin,
+} = require("../middleware/ratelimit");
+const { journaliserRequete } = require("../utils/audit");
 
 const ISSUER = process.env.TOTP_ISSUER || "Forteresse";
 const FENETRE = 1; // tolerance : +/- 1 bloc de 30 s
@@ -91,7 +97,7 @@ router.get("/2fa/setup", requirePending2FA, async (req, res, next) => {
 });
 
 // POST /2fa/verify : confirme l'association avec un premier code
-router.post("/2fa/verify", requirePending2FA, async (req, res, next) => {
+router.post("/2fa/verify", gardeAntiBruteForce, requirePending2FA, async (req, res, next) => {
   try {
     const pending = req.session.pending2fa;
     if (!pending.needsSetup || !pending.secret) {
@@ -104,6 +110,17 @@ router.post("/2fa/verify", requirePending2FA, async (req, res, next) => {
     const ok = user && (await codeValide(req.body.token, pending.secret));
 
     if (!ok) {
+      // Echec TOTP = tentative de connexion ratee : compteur + audit
+      journaliserRequete(req, {
+        action: "TOTP_FAILED",
+        level: "warning",
+        username: pending.username,
+        details: { etape: "premiere_association" },
+      });
+      if (echecLogin(req)) {
+        res.set("Retry-After", "900");
+        return res.status(429).render("429", { secondes: 900 });
+      }
       // Meme secret : l'utilisateur peut rescanner ou retaper le code
       const uri = generateURI({ issuer: ISSUER, label: pending.username, secret: pending.secret });
       const qrDataUrl = await QRCode.toDataURL(uri, { width: 240, margin: 2 });
@@ -118,6 +135,13 @@ router.post("/2fa/verify", requirePending2FA, async (req, res, next) => {
     await user.save();
 
     await promouvoirSession(req, user);
+    journaliserRequete(req, {
+      action: "LOGIN_SUCCESS",
+      level: "notice",
+      username: user.username,
+      details: { etape: "premiere_association_2fa" },
+    });
+    succesLogin(req); // IP blanchie : les echecs passes sont oublies
     res.redirect("/dashboard");
   } catch (err) {
     next(err);
@@ -137,7 +161,7 @@ router.get("/login/totp", requirePending2FA, (req, res) => {
 });
 
 // POST /login/totp : verifie le code contre le secret stocke en base
-router.post("/login/totp", requirePending2FA, async (req, res, next) => {
+router.post("/login/totp", gardeAntiBruteForce, requirePending2FA, async (req, res, next) => {
   try {
     const pending = req.session.pending2fa;
     if (pending.needsSetup) {
@@ -152,11 +176,31 @@ router.post("/login/totp", requirePending2FA, async (req, res, next) => {
       (await codeValide(req.body.token, user.totpSecret));
 
     if (!ok) {
+      // Echec TOTP = tentative de connexion ratee : compteur + audit.
+      // Un attaquant qui a le mot de passe ne peut pas essayer les
+      // 1 000 000 codes possibles : 5 essais et il est bloque.
+      journaliserRequete(req, {
+        action: "TOTP_FAILED",
+        level: "warning",
+        username: pending.username,
+        details: { etape: "verification_2fa" },
+      });
+      if (echecLogin(req)) {
+        res.set("Retry-After", "900");
+        return res.status(429).render("429", { secondes: 900 });
+      }
       // Message generique, comme pour le mot de passe
       return res.status(401).render("2fa-login", { erreur: "Code invalide." });
     }
 
     await promouvoirSession(req, user);
+    journaliserRequete(req, {
+      action: "LOGIN_SUCCESS",
+      level: "notice",
+      username: user.username,
+      details: { etape: "mot_de_passe_plus_2fa" },
+    });
+    succesLogin(req); // connexion complete : IP blanchie
     res.redirect("/dashboard");
   } catch (err) {
     next(err);

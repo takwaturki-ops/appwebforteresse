@@ -1,0 +1,17 @@
+<%- include("partials/header", { titre: "Trop de tentatives" }) %>
+
+<div class="carte erreur-403">
+  <h1>429 - Trop de tentatives</h1>
+
+  <p>De nombreux &eacute;checs de connexion ont &eacute;t&eacute; d&eacute;tect&eacute;s
+     depuis votre adresse : l'acc&egrave;s est temporairement bloqu&eacute;.</p>
+
+  <p>R&eacute;essayez dans environ
+     <strong><%= Math.ceil(secondes / 60) %> minute(s)</strong>.</p>
+
+  <p class="muted">Cet &eacute;v&eacute;nement a &eacute;t&eacute; enregistr&eacute; dans le journal d'audit.</p>
+
+  <a class="btn-lien" href="/login">Retour &agrave; la connexion</a>
+</div>
+
+<%- include("partials/footer") %>
