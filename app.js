@@ -16,11 +16,14 @@ const path = require("path");
 const helmet = require("helmet");
 const session = require("express-session");
 const connectPgSimple = require("connect-pg-simple");
+const cookieParser = require("cookie-parser");
+const { doubleCsrf } = require("csrf-csrf");
 
 const authRoutes = require("./routes/auth");
 const totpRoutes = require("./routes/totp");
 const adminRoutes = require("./routes/admin");
 const { requireAuth } = require("./middleware/auth");
+const { journaliserRequete } = require("./utils/audit");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -88,8 +91,61 @@ app.use(
   })
 );
 
+// Force la creation effective de la session des la premiere requete.
+// Necessaire pour lier le jeton CSRF a un identifiant de session
+// stable (avec saveUninitialized:false, une session vierge n'est
+// pas sauvegardee et changerait d'identifiant a chaque requete).
+app.use((req, res, next) => {
+  if (!req.session.init) req.session.init = true;
+  next();
+});
+
+// cookie-parser : rempli req.cookies - requis par csrf-csrf pour
+// lire son cookie "__csrf-token" (modele double-submit cookie).
+app.use(cookieParser());
+
 // -------------------------------------------------------------
-// 5. MOTEUR DE TEMPLATES - EJS avec echappement automatique (Lecon 5)
+// 5. JETONS CSRF (Phase 5) - defense anti Cross-Site Request Forgery
+//
+// Principe du jeton de synchronisation : chaque formulaire emis par
+// notre site contient un jeton ALEATOIRE lie a la session de
+// l'utilisateur ; tout POST sans le bon jeton est rejete en 403.
+// Un site pirate peut forcer l'envoi d'un POST avec le cookie de
+// session de la victime, mais il ne peut PAS lire le contenu de nos
+// pages (same-origin policy) -> il ne connait jamais le jeton.
+//
+// Defense en profondeur avec le drapeau SameSite=Strict du cookie
+// de session (deuxieme couche, deja en place).
+// -------------------------------------------------------------
+const { doubleCsrfProtection, generateCsrfToken, invalidCsrfTokenError } =
+  doubleCsrf({
+    getSecret: () => process.env.CSRF_SECRET,
+    getSessionIdentifier: (req) => req.session.id,
+    // IMPORTANT : par defaut la lib lit le header "x-csrf-token" (usage
+    // AJAX/SPA). Nos formulaires HTML classiques transportent le jeton
+    // dans le corps : on lit donc req.body._csrf.
+    getCsrfTokenFromRequest: (req) => req.body._csrf,
+    cookieName: "csrf-token",
+    cookieOptions: {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: EST_PRODUCTION,
+      path: "/",
+    },
+    size: 64,
+  });
+
+app.use(doubleCsrfProtection);
+
+// Le jeton est disponible dans TOUTES les vues via csrfToken
+// (chaque formulaire l'inclut dans un champ cache name="_csrf").
+app.use((req, res, next) => {
+  res.locals.csrfToken = generateCsrfToken(req, res);
+  next();
+});
+
+// -------------------------------------------------------------
+// 6. MOTEUR DE TEMPLATES - EJS avec echappement automatique (Lecon 5)
 // -------------------------------------------------------------
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -113,7 +169,32 @@ app.get("/dashboard", requireAuth, (req, res) => {
 });
 
 // -------------------------------------------------------------
-// 7. DEMARRAGE
+// 8. GESTIONNAIRE D'ERREUR CSRF
+// Requête POST sans jeton valide = tentative CSRF (ou formulaire
+// périmé) -> 403 + alerte dans le journal d'audit.
+// Signature a 4 arguments : c'est ainsi qu'Express reconnait un
+// middleware de gestion d'erreurs.
+// -------------------------------------------------------------
+app.use((err, req, res, next) => {
+  if (err === invalidCsrfTokenError || err.code === "ERR_CSRF_MISSING_TOKEN" || err.code === "ERR_CSRF_INVALID_TOKEN") {
+    journaliserRequete(req, {
+      action: "CSRF_BLOCKED",
+      level: "warning",
+      username: req.session ? req.session.username : null,
+      details: { chemin: req.originalUrl, methode: req.method },
+    });
+    return res.status(403).render("403", {
+      chemin: req.originalUrl,
+      roleUtilisateur: (req.session && req.session.role) || "inconnu",
+      rolesRequis: ["un jeton CSRF valide"],
+    });
+  }
+  // Autre erreur : la passer au gestionnaire par defaut d'Express
+  next(err);
+});
+
+// -------------------------------------------------------------
+// 9. DEMARRAGE
 // -------------------------------------------------------------
 app.listen(PORT, () => {
   console.log(`Forteresse demarree sur http://localhost:${PORT}`);

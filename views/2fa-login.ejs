@@ -11,6 +11,7 @@
   <% } %>
 
   <form method="POST" action="/login/totp">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <label for="token">Code &agrave; 6 chiffres</label>
     <input type="text" id="token" name="token" inputmode="numeric"
            pattern="[0-9]{6}" maxlength="6" required

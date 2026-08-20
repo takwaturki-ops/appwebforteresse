@@ -13,6 +13,7 @@
     a la Phase 5 - pour l'instant on pose les fondations.
   -->
   <form method="POST" action="/login">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <label for="username">Identifiant</label>
     <input type="text" id="username" name="username"
            required maxlength="50" autocomplete="username">

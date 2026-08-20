@@ -27,6 +27,7 @@
       <% } %>
 
       <form method="POST" action="/2fa/verify">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <label for="token">Code de v&eacute;rification</label>
         <input type="text" id="token" name="token" inputmode="numeric"
                pattern="[0-9]{6}" maxlength="6" required

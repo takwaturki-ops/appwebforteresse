@@ -35,14 +35,17 @@
       express-validator, changement de role superadmin seul, anti-self-change,
       escalation bloquee cote serveur), comptes demo stagetest/admintest
       (creds dans comptes-demo.local.md, hors git)
-- [ ] Phase 5 : CSRF + helmet + cookies durcis
+- [x] Phase 5 : CSRF - jetons de synchronisation (csrf-csrf, modele double-submit
+      cookie) dans TOUS les formulaires, cookie parser ajoute, gestionnaire
+      d'erreur 403 + alerte CSRF_BLOCKED en audit ; point cle : getCsrfTokenFromRequest
+      doit lire req.body._csrf (defaut = header x-csrf-token pour SPA)
+- [ ] Phase 6 : rate limiting login
 - [ ] Phase 6 : rate limiting login
 - [ ] Phase 7 : audit.log JSON
 - [ ] Phase 8 : API JWT
 - [ ] Phase 9 : n8n Azure + tests + livrables
 
 ## Point de reprise
-Prochaine etape : Phase 5 - CSRF (csrf-csrf sur tous les formulaires) ;
-attention : la session navigateur ouverte avant le fix du 2026-08-17
-a un role stale -> se deconnecter/reconnecter pour la refraichir
+Prochaine etape : Phase 6 - rate limiting (5 essais/min par IP -> blocage 15 min)
++ retester le parcours navigateur complet apels Phase 5 (CSRF)
 

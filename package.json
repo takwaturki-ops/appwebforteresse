@@ -12,6 +12,7 @@
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "connect-pg-simple": "^10.0.0",
+    "cookie-parser": "^1.4.7",
     "csrf-csrf": "^4.0.3",
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",

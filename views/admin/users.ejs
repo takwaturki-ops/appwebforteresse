@@ -20,6 +20,7 @@
         <td>
           <% if (session.role === "superadmin" && u.id !== monId) { %>
             <form method="POST" action="/admin/users/<%= u.id %>/role" class="inline">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <select name="role">
                 <option value="stagiaire" <%= u.Role.name === "stagiaire" ? "selected" : "" %>>stagiaire</option>
                 <option value="admin" <%= u.Role.name === "admin" ? "selected" : "" %>>admin</option>

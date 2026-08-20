@@ -8,6 +8,7 @@
   <% }); } %>
 
   <form method="POST" action="/admin/users">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <label for="username">Identifiant</label>
     <input type="text" id="username" name="username" required maxlength="50"
            pattern="[a-zA-Z0-9_.\-]{3,50}"
