@@ -1,8 +1,10 @@
 # Dependances
 node_modules/
 
-# Secrets (JAMAIS dans git)
+# Secrets (JAMAIS dans git) - toutes variantes de .env sauf .env.example
 .env
+.env.*
+!.env.example
 comptes-demo.local.md
 
 # Logs & audit (on fournira des extraits, pas le fichier)
