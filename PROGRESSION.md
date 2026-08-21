@@ -51,12 +51,20 @@
       middleware requireJwt + requireRoleApi (meme RBAC que le web,
       403 JSON + alerte API_ACCESS_DENIED) ; rate limiting partage avec
       le web ; CSRF exempté pour /api (auth par header, pas de cookie)
-- [ ] Phase 9 : n8n Azure + tests + livrables (screenshots 2FA, extrait audit.log)
+- [x] Phase 9 : n8n - scripts/n8n-simulation.js (workflow surveillance
+      rejoue en local : login JWT -> /api/audit -> detection alertes,
+      teste OK : 8 alertes reelles detectees ; mauvais mdp -> refus propre),
+      compte dedie n8n-bot (creds .env), docs/n8n-workflows.md (2 workflows
+      documentes noeud par noeud pour l'instance Azure), README.md complet
+      (livrable principal), extrait audit.log inclus
+- [ ] Reste utilisateur : recree les workflows dans n8n Azure (tunnel
+      cloudflared ou VM), screenshots livrables (QR 2FA, code mobile,
+      dashboard, 429, audit.log), rapport final
 
 ## Point de reprise
-Prochaine etape : Phase 9 - workflows n8n sur l'instance Azure :
-1) n8n fait POST /api/login -> JWT, 2) surveille GET /api/audit (alertes
-creation admin / blocage brute force), 3) valide les elevations via
-POST /api/users/:id/role ; cote utilisateur : retester parcours navigateur
-+ screenshots livrables (QR 2FA, code mobile, dashboard, extrait audit.log)
+DEV TERMINE (phases 0-9 codees). Reste a faire cote utilisateur :
+1. Recreer les 2 workflows dans n8n Azure (docs/n8n-workflows.md)
+2. Screenshots livrables : QR 2FA + code Google Authenticator + dashboard,
+   page 429, extrait audit.log, workflows n8n
+3. Eventuellement : code de secours TOTP (bonus), tunnel cloudflared
 
