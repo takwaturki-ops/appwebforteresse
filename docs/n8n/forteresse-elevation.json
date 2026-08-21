@@ -1,0 +1,225 @@
+{
+  "name": "Forteresse - Validation Elevation Privileges",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Validation d'elevation de privileges a distance\n\nUn demande arrive sur le webhook (body JSON) :\n{ \"userId\": 2, \"role\": \"admin\", \"demandeur\": \"admintest\", \"cible\": \"stagetest\" }\n\nLe SuperAdmin recoit un email avec boutons APPROUVER / REFUSER.\nSi approuve : n8n appelle POST /api/users/:id/role (JWT superadmin,\nRBAC verifie cote serveur, action tracee dans audit.log).\n\n1. REMPLACER l'URL dans les 2 noeuds HTTP\n2. Configurer le credential SMTP dans les noeuds Email\n3. Necessite n8n >= 1.5 (noeud Email \"Send and Wait\")",
+        "height": 340,
+        "width": 420
+      },
+      "id": "b1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Note - Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-700, -220]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "forteresse-elevation",
+        "responseMode": "onReceived",
+        "responseData": "Demande recue. En attente d'approbation du SuperAdmin.",
+        "options": {}
+      },
+      "id": "b1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Demande Elevation",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-220, 0],
+      "webhookId": "forteresse-elevation"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REMPLACER-VOTRE-URL/api/login",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"username\": \"n8n-bot\", \"password\": \"{{$vars.N8N_PASSWORD}}\"}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "b1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Login API (JWT)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "fromEmail": "secops@forteresse.local",
+        "toEmail": "superadmin@exemple.fr",
+        "subject": "=Approbation requise : elevation de privileges",
+        "emailFormat": "text",
+        "message": "=Une demande d'elevation de privileges attend votre decision :\n\nDemandeur : {{ $('Demande Elevation').item.json.body.demandeur }}\nUtilisateur cible : {{ $('Demande Elevation').item.json.body.cible }} (id {{ $('Demande Elevation').item.json.body.userId }})\nRole demande : {{ $('Demande Elevation').item.json.body.role }}\n\nCette action sera appliquee via l'API Forteresse et tracee dans le journal d'audit.",
+        "responseType": "approval",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "b1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Approbation SuperAdmin",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-approve",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Approuve ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://REMPLACER-VOTRE-URL/api/users/{{ $('Demande Elevation').item.json.body.userId }}/role",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $('Login API (JWT)').item.json.token }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"role\": \"{{ $('Demande Elevation').item.json.body.role }}\"}",
+        "options": {}
+      },
+      "id": "b1b2c3d4-0006-4000-8000-000000000006",
+      "name": "Appliquer le role",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, -120]
+    },
+    {
+      "parameters": {
+        "fromEmail": "secops@forteresse.local",
+        "toEmail": "equipe-secops@exemple.fr",
+        "subject": "=Elevation appliquee : {{ $json.cible }} est desormais {{ $json.nouveauRole }}",
+        "emailFormat": "text",
+        "text": "=Resultat de l'application : {{ JSON.stringify($json) }}\n\nAction tracee dans audit.log (ROLE_CHANGED via api).",
+        "options": {}
+      },
+      "id": "b1b2c3d4-0007-4000-8000-000000000007",
+      "name": "Confirmation",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [880, -120]
+    },
+    {
+      "parameters": {
+        "fromEmail": "secops@forteresse.local",
+        "toEmail": "equipe-secops@exemple.fr",
+        "subject": "Elevation refusee par le SuperAdmin",
+        "emailFormat": "text",
+        "text": "La demande d'elevation a ete refusee. Aucun changement applique.",
+        "options": {}
+      },
+      "id": "b1b2c3d4-0008-4000-8000-000000000008",
+      "name": "Refus",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [660, 120]
+    }
+  ],
+  "connections": {
+    "Demande Elevation": {
+      "main": [
+        [
+          {
+            "node": "Login API (JWT)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login API (JWT)": {
+      "main": [
+        [
+          {
+            "node": "Approbation SuperAdmin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approbation SuperAdmin": {
+      "main": [
+        [
+          {
+            "node": "Approuve ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Approuve ?": {
+      "main": [
+        [
+          {
+            "node": "Appliquer le role",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Refus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Appliquer le role": {
+      "main": [
+        [
+          {
+            "node": "Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}

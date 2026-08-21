@@ -1,7 +1,24 @@
 # Workflows n8n — Surveillance Forteresse
 
-Ces workflows sont à recréer dans ton instance **n8n (Azure)**.
-Le script `scripts/n8n-simulation.js` reproduit le workflow 1 en local :
+Ces workflows sont à importer dans ton instance **n8n (Azure)**.
+
+## Méthode recommandée : importer les JSON
+
+Deux fichiers prêts à l'emploi sont fournis :
+
+| Fichier | Workflow |
+|---|---|
+| `docs/n8n/forteresse-surveillance.json` | Surveillance SecOps (toutes les 5 min) |
+| `docs/n8n/forteresse-elevation.json` | Validation d'élévation de privilèges (approbation par email) |
+
+**Dans n8n** : menu **Workflows** → bouton **Import from File** (ou `...` → Import from File) → sélectionner le JSON → le workflow apparaît avec tous ses nœuds et connexions.
+
+**Après import, 3 réglages obligatoires** :
+1. Remplacer les URLs `https://REMPLACER-VOTRE-URL` par l'adresse réelle de l'app (tunnel cloudflared ou VM Azure)
+2. Configurer le **credential SMTP** dans les nœuds Email (et l'adresse de destination)
+3. Renseigner le mot de passe du compte `n8n-bot` : idéalement via une **variable d'environnement n8n** `N8N_PASSWORD` (n8n : Settings → Variables), référencée par `{{$vars.N8N_PASSWORD}}` dans les nœuds Login
+
+Le script `scripts/n8n-simulation.js` reproduit le workflow de surveillance en local :
 la logique et les endpoints sont identiques — seule la brique "alerte"
 (console ici) change dans n8n (email, Teams, Slack...).
 
@@ -19,6 +36,10 @@ la logique et les endpoints sont identiques — seule la brique "alerte"
    utiliserait une IP allowlist et un secret rotatif.
 
 ---
+
+## Méthode alternative : construction manuelle
+
+*(utile si tu veux comprendre chaque nœud — mais l'import des JSON ci-dessus fait la même chose en 30 secondes)*
 
 ## Workflow 1 — Surveillance SecOps (le vigile qui ne dort jamais)
 

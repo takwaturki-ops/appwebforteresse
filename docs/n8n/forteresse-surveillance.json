@@ -1,0 +1,206 @@
+{
+  "name": "Forteresse - Surveillance SecOps",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Surveillance Forteresse\n\n1. REMPLACER l'URL dans les 2 noeuds HTTP (tunnel cloudflared ou VM)\n2. Configurer le credential SMTP dans le noeud Email\n3. Renseigner le mot de passe n8n-bot (variable d'env N8N_PASSWORD ou mot de passe)\n4. Activer le workflow\n\nLogic testee par scripts/n8n-simulation.js",
+        "height": 300,
+        "width": 400
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "Note - Instructions",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-560, -200]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Toutes les 5 minutes",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [-160, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://REMPLACER-VOTRE-URL/api/login",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"username\": \"n8n-bot\", \"password\": \"{{$vars.N8N_PASSWORD}}\"}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Login API (JWT)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [40, 0]
+    },
+    {
+      "parameters": {
+        "url": "=https://REMPLACER-VOTRE-URL/api/audit?limit=100",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $json.token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Lire audit",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Meme logique que scripts/n8n-simulation.js (fonction analyser)\nconst reponse = $input.first().json;\nconst evenements = reponse.evenements || [];\n\nconst CRITIQUES = new Set([\n  'RATE_LIMIT_BLOCAGE',\n  'PRIVILEGE_ESCALATION_BLOCKED',\n  'API_ACCESS_DENIED',\n]);\n\nconst alertes = [];\nfor (const e of evenements) {\n  if (CRITIQUES.has(e.action)) {\n    alertes.push({ type: e.action, severite: e.level, qui: e.username, details: e.details });\n  } else if (\n    e.action === 'USER_CREATED' &&\n    e.details &&\n    ['admin', 'superadmin'].includes(e.details.nouveauRole)\n  ) {\n    alertes.push({ type: 'NOUVEL_ADMINISTRATEUR', severite: 'notice', qui: e.username, details: e.details });\n  } else if (\n    e.action === 'ROLE_CHANGED' &&\n    e.details &&\n    ['admin', 'superadmin'].includes(e.details.nouveauRole)\n  ) {\n    alertes.push({ type: 'ELEVATION_PRIVILEGE', severite: 'notice', qui: e.username, details: e.details });\n  }\n}\n\nreturn [{ json: { alertes, totalAnalyses: evenements.length } }];"
+      },
+      "id": "a1b2c3d4-0005-4000-8000-000000000005",
+      "name": "Detecter les alertes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-alertes",
+              "leftValue": "={{ $json.alertes.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0006-4000-8000-000000000006",
+      "name": "Des alertes ?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [640, 0]
+    },
+    {
+      "parameters": {
+        "fromEmail": "secops@forteresse.local",
+        "toEmail": "equipe-secops@exemple.fr",
+        "subject": "=ALERTE SecOps Forteresse : {{ $json.alertes.length }} evenement(s) critique(s)",
+        "emailFormat": "text",
+        "text": "={{ $json.alertes.map(a => '[' + a.severite.toUpperCase() + '] ' + a.type + ' (par ' + a.qui + ') : ' + JSON.stringify(a.details)).join('\\n') }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0007-4000-8000-000000000007",
+      "name": "Envoyer l'alerte",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [860, -100]
+    },
+    {
+      "parameters": {},
+      "id": "a1b2c3d4-0008-4000-8000-000000000008",
+      "name": "Rien a signaler",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [860, 100]
+    }
+  ],
+  "connections": {
+    "Toutes les 5 minutes": {
+      "main": [
+        [
+          {
+            "node": "Login API (JWT)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login API (JWT)": {
+      "main": [
+        [
+          {
+            "node": "Lire audit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lire audit": {
+      "main": [
+        [
+          {
+            "node": "Detecter les alertes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detecter les alertes": {
+      "main": [
+        [
+          {
+            "node": "Des alertes ?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Des alertes ?": {
+      "main": [
+        [
+          {
+            "node": "Envoyer l'alerte",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rien a signaler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
