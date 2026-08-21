@@ -42,6 +42,7 @@ setInterval(() => {
 
 // Garde a poser devant chaque route de connexion (mdp, TOTP) :
 // IP bloquee -> 429 + header Retry-After, la route ne s'execute pas.
+// Reponse HTML pour le web, JSON pour l'API (meme garde, deux formats).
 const gardeAntiBruteForce = (req, res, next) => {
   const etat = etatDe(req.ip);
   const reste = etat.bloqueJusqua - Date.now();
@@ -55,6 +56,11 @@ const gardeAntiBruteForce = (req, res, next) => {
       details: { secondesRestantes: secondes, chemin: req.originalUrl },
     });
     res.set("Retry-After", String(secondes));
+    if (req.path.startsWith("/api")) {
+      return res
+        .status(429)
+        .json({ erreur: "Trop de tentatives. Reessayez dans " + secondes + " secondes." });
+    }
     return res.status(429).render("429", { secondes });
   }
   next();

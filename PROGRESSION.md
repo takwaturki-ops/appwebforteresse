@@ -45,12 +45,18 @@
       LOGIN_SUCCESS, TOTP_FAILED, LOGOUT, RATE_LIMIT_BLOCAGE (s'ajoutent a
       ACCESS_DENIED, CSRF_BLOCKED, USER_CREATED, ROLE_CHANGED,
       PRIVILEGE_ESCALATION_BLOCKED)
-- [ ] Phase 8 : API JWT (pour scripts + n8n)
+- [x] Phase 8 : API REST + JWT - POST /api/login (JWT signe HS256,
+      15 min, header Authorization: Bearer), GET /api/users,
+      POST /api/users/:id/role, GET /api/audit?limit=N (pour n8n) ;
+      middleware requireJwt + requireRoleApi (meme RBAC que le web,
+      403 JSON + alerte API_ACCESS_DENIED) ; rate limiting partage avec
+      le web ; CSRF exempté pour /api (auth par header, pas de cookie)
 - [ ] Phase 9 : n8n Azure + tests + livrables (screenshots 2FA, extrait audit.log)
 
 ## Point de reprise
-Prochaine etape : Phase 8 - API REST /api/* avec JWT (login API -> jeton signe
-15 min, header Authorization: Bearer, middleware requireJwt + requireRole API) ;
-puis n8n (Azure) qui consomme cette API ; cote utilisateur : retester le
-parcours navigateur complet et prendre les screenshots livrables
+Prochaine etape : Phase 9 - workflows n8n sur l'instance Azure :
+1) n8n fait POST /api/login -> JWT, 2) surveille GET /api/audit (alertes
+creation admin / blocage brute force), 3) valide les elevations via
+POST /api/users/:id/role ; cote utilisateur : retester parcours navigateur
++ screenshots livrables (QR 2FA, code mobile, dashboard, extrait audit.log)
 

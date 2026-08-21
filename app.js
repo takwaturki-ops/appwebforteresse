@@ -23,6 +23,7 @@ const { doubleCsrf } = require("csrf-csrf");
 const authRoutes = require("./routes/auth");
 const totpRoutes = require("./routes/totp");
 const adminRoutes = require("./routes/admin");
+const apiRoutes = require("./routes/api");
 const { requireAuth } = require("./middleware/auth");
 const { journaliserRequete } = require("./utils/audit");
 
@@ -70,6 +71,11 @@ app.use(
 // -------------------------------------------------------------
 app.use(express.urlencoded({ extended: false }));
 
+// Parsing JSON (Phase 8) : traduit le corps des requetes API
+// (Content-Type: application/json) vers req.body. Limite volontairement
+// petite : un payload volumineux n'a rien a faire sur nos endpoints.
+app.use(express.json({ limit: "16kb" }));
+
 // -------------------------------------------------------------
 // 3. FICHIERS STATIQUES - sert /public (css, js client) sur /
 // -------------------------------------------------------------
@@ -114,8 +120,10 @@ app.use(
 // Necessaire pour lier le jeton CSRF a un identifiant de session
 // stable (avec saveUninitialized:false, une session vierge n'est
 // pas sauvegardee et changerait d'identifiant a chaque requete).
+// Les requetes API (JWT, sans session) sont exclues : inutile de
+// creer des lignes dans la table sessions pour elles.
 app.use((req, res, next) => {
-  if (!req.session.init) req.session.init = true;
+  if (!req.path.startsWith("/api") && !req.session.init) req.session.init = true;
   next();
 });
 
@@ -144,6 +152,10 @@ const { doubleCsrfProtection, generateCsrfToken, invalidCsrfTokenError } =
     // AJAX/SPA). Nos formulaires HTML classiques transportent le jeton
     // dans le corps : on lit donc req.body._csrf.
     getCsrfTokenFromRequest: (req) => req.body._csrf,
+    // L'API /api/* est authentifiee par JWT (header Authorization) :
+    // pas de cookie ni de formulaire -> pas de CSRF possible, on
+    // l'exempte de la verification (sinon tout POST /api serait 403).
+    skipCsrfProtection: (req) => req.path.startsWith("/api"),
     cookieName: "csrf-token",
     cookieOptions: {
       httpOnly: true,
@@ -158,8 +170,11 @@ app.use(doubleCsrfProtection);
 
 // Le jeton est disponible dans TOUTES les vues via csrfToken
 // (chaque formulaire l'inclut dans un champ cache name="_csrf").
+// Inutile pour les requetes API (JSON, pas de template).
 app.use((req, res, next) => {
-  res.locals.csrfToken = generateCsrfToken(req, res);
+  if (!req.path.startsWith("/api")) {
+    res.locals.csrfToken = generateCsrfToken(req, res);
+  }
   next();
 });
 
@@ -182,6 +197,7 @@ app.use((req, res, next) => {
 app.use("/", authRoutes);   // /login, /logout (etape 1 : mot de passe)
 app.use("/", totpRoutes);   // /2fa/*, /login/totp (etape 2 : code TOTP)
 app.use("/", adminRoutes);  // /admin/* (RBAC : requireRole par route)
+app.use("/", apiRoutes);    // /api/* (JWT : scripts et n8n)
 
 app.get("/dashboard", requireAuth, (req, res) => {
   res.render("dashboard");
