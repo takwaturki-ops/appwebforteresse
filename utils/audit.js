@@ -55,4 +55,27 @@ function journaliserRequete(req, entree) {
   });
 }
 
-module.exports = { journaliser, journaliserRequete };
+// Lecture des N derniers evenements (ordre du fichier : les plus
+// anciens d'abord). Utilisee par la page web /admin/audit (superadmin)
+// et par l'endpoint API GET /api/audit (n8n).
+// Les lignes incompletes (ecriture concurrente) sont ignorees.
+function lireDerniersEvenements(limite = 100) {
+  if (!fs.existsSync(FICHIER_AUDIT)) return [];
+  const lignes = fs
+    .readFileSync(FICHIER_AUDIT, "utf8")
+    .trim()
+    .split("\n")
+    .slice(-limite);
+
+  const evenements = [];
+  for (const ligne of lignes) {
+    try {
+      evenements.push(JSON.parse(ligne));
+    } catch {
+      // ligne incomplete : ignoree
+    }
+  }
+  return evenements;
+}
+
+module.exports = { journaliser, journaliserRequete, lireDerniersEvenements };

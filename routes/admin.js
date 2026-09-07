@@ -21,7 +21,7 @@ const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const { User, Role } = require("../models");
 const { requireRole } = require("../middleware/role");
-const { journaliserRequete } = require("../utils/audit");
+const { journaliserRequete, lireDerniersEvenements } = require("../utils/audit");
 
 const COUT_BCRYPT = 12;
 const NB_ROLES = 3; // stagiaire, admin, superadmin
@@ -179,5 +179,17 @@ router.post(
     }
   }
 );
+
+// -------------------------------------------------------------
+// JOURNAL D'AUDIT - SUPERADMIN UNIQUEMENT (cahier des charges)
+// L'affichage des logs du systeme est reserve au superadmin :
+// un admin qui tente -> 403 + alerte ACCESS_DENIED (testable).
+// -------------------------------------------------------------
+router.get("/admin/audit", requireRole("superadmin"), (req, res) => {
+  // 100 derniers evenements, plus recents en premier (lecture seule,
+  // aucune ecriture : le journal reste append-only et intouchable)
+  const evenements = lireDerniersEvenements(100).reverse();
+  res.render("admin/audit", { evenements });
+});
 
 module.exports = router;

@@ -57,9 +57,16 @@
       compte dedie n8n-bot (creds .env), docs/n8n-workflows.md (2 workflows
       documentes noeud par noeud pour l'instance Azure), README.md complet
       (livrable principal), extrait audit.log inclus
+- [x] Complement (sept. 2026) : page WEB /admin/audit (superadmin seul,
+      403 + alerte pour les autres roles) - exigence "SuperAdmin consulte
+      les logs" desormais tenue cote web ET API ; lecture extraite dans
+      utils/audit.lireDerniersEvenements (partagee avec /api/audit)
 - [ ] Reste utilisateur : recree les workflows dans n8n Azure (tunnel
       cloudflared ou VM), screenshots livrables (QR 2FA, code mobile,
-      dashboard, 429, audit.log), rapport final
+      dashboard, 429, audit.log), rapport final, CLARIFIER avec
+      l'encadrant le livrable docker-compose.yml (Docker annule par lui
+      mais liste dans les livrables - option : le fournir quand meme
+      comme artefact optionnel)
 
 ## Point de reprise
 DEV TERMINE (phases 0-9 codees). Reste a faire cote utilisateur :

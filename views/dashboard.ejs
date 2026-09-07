@@ -24,6 +24,10 @@
     <h2>Administration</h2>
     <p><a class="btn-lien" href="/admin/users">Gerer les utilisateurs</a></p>
   <% } %>
+
+  <% if (session.role === "superadmin") { %>
+    <p><a class="btn-lien" href="/admin/audit">Consulter le journal d'audit</a></p>
+  <% } %>
 </div>
 
 <%- include("partials/footer") %>
