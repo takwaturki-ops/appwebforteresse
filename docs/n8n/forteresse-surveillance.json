@@ -33,10 +33,10 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://REMPLACER-VOTRE-URL/api/login",
+        "url": "http://host.docker.internal:3000/api/login",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"username\": \"n8n-bot\", \"password\": \"{{$vars.N8N_PASSWORD}}\"}",
+        "jsonBody": "={\"username\": \"n8n-bot\", \"password\": \"{{$env.FORTERESSE_API_PASSWORD}}\"}",
         "options": {
           "response": {
             "response": {
@@ -53,7 +53,7 @@
     },
     {
       "parameters": {
-        "url": "=https://REMPLACER-VOTRE-URL/api/audit?limit=100",
+        "url": "=http://host.docker.internal:3000/api/audit?limit=100",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [

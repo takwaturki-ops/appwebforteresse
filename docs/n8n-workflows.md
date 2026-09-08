@@ -14,9 +14,13 @@ Deux fichiers prêts à l'emploi sont fournis :
 **Dans n8n** : menu **Workflows** → bouton **Import from File** (ou `...` → Import from File) → sélectionner le JSON → le workflow apparaît avec tous ses nœuds et connexions.
 
 **Après import, 3 réglages obligatoires** :
-1. Remplacer les URLs `https://REMPLACER-VOTRE-URL` par l'adresse réelle de l'app (tunnel cloudflared ou VM Azure)
+1. Vérifier les URLs : `http://host.docker.internal:3000` (n8n Docker local
+   vers app WSL) ; au déploiement, remplacer par l'adresse réelle de l'app
 2. Configurer le **credential SMTP** dans les nœuds Email (et l'adresse de destination)
-3. Renseigner le mot de passe du compte `n8n-bot` : idéalement via une **variable d'environnement n8n** `N8N_PASSWORD` (n8n : Settings → Variables), référencée par `{{$vars.N8N_PASSWORD}}` dans les nœuds Login
+3. Mot de passe du compte `n8n-bot` via la **variable d'environnement du
+   conteneur** `FORTERESSE_API_PASSWORD` (`docker run -e ...`, jamais en clair),
+   référencée par `{{$env.FORTERESSE_API_PASSWORD}}` dans les nœuds Login
+   (+ `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` requis pour l'accès `$env`)
 
 Le script `scripts/n8n-simulation.js` reproduit le workflow de surveillance en local :
 la logique et les endpoints sont identiques — seule la brique "alerte"
@@ -26,11 +30,21 @@ la logique et les endpoints sont identiques — seule la brique "alerte"
 
 1. Le compte d'automatisation `n8n-bot` existe (créé en Phase 9,
    identifiants dans le `.env` local : `N8N_USER` / `N8N_PASSWORD`)
-2. n8n (Azure) doit pouvoir joindre l'application. Deux options :
-   - **Test/démo** : faire tourner l'app sur ta machine et utiliser un
-     tunnel HTTPS (cloudflared : `cloudflared tunnel --url http://localhost:3000`)
-     → URL publique temporaire à mettre dans n8n
-   - **Production** : déployer l'app sur un serveur joignable (VM Azure)
+2. Connectivité n8n → application :
+   - **Local (n8n Docker + app WSL)** : `http://host.docker.internal:3000`
+     (`localhost` dans un conteneur = le conteneur lui-même, pas l'app).
+     PREREQUIS Windows 11 : WSL en mode reseau miroir, sinon le conteneur
+     ne peut pas joindre les ports WSL (connexion refusee). Creer
+     `%USERPROFILE%\.wslconfig` avec :
+     ```
+     [wsl2]
+     networkingMode=mirrored
+     ```
+     puis `wsl --shutdown` et rouvrir Ubuntu. Verifier depuis le conteneur :
+     `docker exec n8n wget -qO- --timeout=8 http://host.docker.internal:3000/login`
+   - **Test/démo à distance** : tunnel HTTPS (cloudflared :
+     `cloudflared tunnel --url http://localhost:3000`)
+   - **Production** : URL publique de l'app déployée (VM Azure)
 3. Aucune 2FA sur ce compte : les machines ne peuvent pas taper de code
    TOTP. C'est une **limite documentée** — en production réelle on
    utiliserait une IP allowlist et un secret rotatif.
