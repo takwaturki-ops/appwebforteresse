@@ -20,7 +20,15 @@ Deux fichiers prêts à l'emploi sont fournis :
 3. Mot de passe du compte `n8n-bot` via la **variable d'environnement du
    conteneur** `FORTERESSE_API_PASSWORD` (`docker run -e ...`, jamais en clair),
    référencée par `{{$env.FORTERESSE_API_PASSWORD}}` dans les nœuds Login
-   (+ `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` requis pour l'accès `$env`)
+   (+ `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` requis pour l'accès `$env`).
+   ⚠️ **Limite constatée sur n8n 2.28.5 (sept. 2026)** : `$env` reste
+   non résolu à l'exécution malgré un flag correct et une variable
+   présente (vérifié : la valeur conteneur == hash base en bcrypt).
+   **Solution de contournement** : coller temporairement le mot de passe
+   en clair dans les 2 nœuds Login pour les tests/démos, puis **rotation
+   du mot de passe** après (`seed` ou `ALTER USER`, + mise à jour du nœud).
+   Compromis assumé et documenté : visible dans l'UI et les logs
+   d'exécution n8n le temps des tests.
 
 Le script `scripts/n8n-simulation.js` reproduit le workflow de surveillance en local :
 la logique et les endpoints sont identiques — seule la brique "alerte"
