@@ -131,6 +131,15 @@ app.use((req, res, next) => {
 // lire son cookie "__csrf-token" (modele double-submit cookie).
 app.use(cookieParser());
 
+// Variables disponibles pour TOUTES les vues, y compris les pages
+// d'erreur : placees AVANT la protection CSRF car un rejet CSRF rend
+// une vue 403 SANS passer par les middlewares situes apres
+// (c'est ce qui faisait crasher la page 403 : "session is not defined").
+app.use((req, res, next) => {
+  res.locals.session = req.session;
+  next();
+});
+
 // -------------------------------------------------------------
 // 5. JETONS CSRF (Phase 5) - defense anti Cross-Site Request Forgery
 //
@@ -171,6 +180,7 @@ app.use(doubleCsrfProtection);
 // Le jeton est disponible dans TOUTES les vues via csrfToken
 // (chaque formulaire l'inclut dans un champ cache name="_csrf").
 // Inutile pour les requetes API (JSON, pas de template).
+// Place AVANT la protection pour la meme raison que session ci-dessus.
 app.use((req, res, next) => {
   if (!req.path.startsWith("/api")) {
     res.locals.csrfToken = generateCsrfToken(req, res);
@@ -183,13 +193,6 @@ app.use((req, res, next) => {
 // -------------------------------------------------------------
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-
-// Petite aide pour toutes les vues : la session est accessible
-// dans les templates sans la passer a chaque render().
-app.use((req, res, next) => {
-  res.locals.session = req.session;
-  next();
-});
 
 // -------------------------------------------------------------
 // 6. ROUTES
