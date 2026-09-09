@@ -27,8 +27,30 @@ Deux fichiers prêts à l'emploi sont fournis :
    **Solution de contournement** : coller temporairement le mot de passe
    en clair dans les 2 nœuds Login pour les tests/démos, puis **rotation
    du mot de passe** après (`seed` ou `ALTER USER`, + mise à jour du nœud).
-   Compromis assumé et documenté : visible dans l'UI et les logs
-   d'exécution n8n le temps des tests.
+    Compromis assumé et documenté : visible dans l'UI et les logs
+    d'exécution n8n le temps des tests.
+
+## Mise en production : le clair y est INTERDIT
+
+Le contournement ci-dessus est strictement limité aux tests locaux.
+Une instance n8n déployée (URL publique, logs conservés, exports JSON
+partagés, sauvegardes) ne doit jamais contenir le secret en clair.
+Avant le déploiement :
+
+1. **Rotation du mot de passe** `n8n-bot` (l'ancienne valeur a transité
+   en clair) : nouveau secret → `ALTER USER` en base + variable d'env
+   du conteneur + nœuds mis à jour. L'ancienne valeur devient inutile.
+2. **Stocker le secret hors workflow**, par ordre de préférence :
+   a. **External Secrets → Azure Key Vault** (recommandé ici : déjà sur
+      Azure ; menu n8n Settings → External Secrets ; le secret n'est
+      ni dans le workflow ni dans les logs, accès traçable et révocable) ;
+   b. **Variables n8n** (`$vars`, Settings → Variables si disponible sur
+      l'instance : chiffrées au repos, masquées dans l'UI) ;
+   c. `$env` du conteneur (`N8N_BLOCK_ENV_ACCESS_IN_NODE=false`), si la
+      version déployée résout correctement (à retester : bug constaté
+      sur 2.28.5, corrigé ou non selon version).
+3. Vérifier après déploiement : exporter le workflow en JSON et contrôler
+   qu'aucune valeur secrète n'y figure en clair (`grep -i password`).
 
 Le script `scripts/n8n-simulation.js` reproduit le workflow de surveillance en local :
 la logique et les endpoints sont identiques — seule la brique "alerte"
