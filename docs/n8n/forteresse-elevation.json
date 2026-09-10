@@ -3,7 +3,7 @@
   "nodes": [
     {
       "parameters": {
-        "content": "## Validation d'elevation de privileges a distance\n\nUn demande arrive sur le webhook (body JSON) :\n{ \"userId\": 2, \"role\": \"admin\", \"demandeur\": \"admintest\", \"cible\": \"stagetest\" }\n\nLe SuperAdmin recoit un email avec boutons APPROUVER / REFUSER.\nSi approuve : n8n appelle POST /api/users/:id/role (JWT superadmin,\nRBAC verifie cote serveur, action tracee dans audit.log).\n\n1. REMPLACER l'URL dans les 2 noeuds HTTP\n2. Configurer le credential SMTP dans les noeuds Email\n3. Necessite n8n >= 1.5 (noeud Email \"Send and Wait\")",
+        "content": "## Validation d'elevation de privileges a distance\n\nUn demande arrive sur le webhook (body JSON) :\n{ \"userId\": 2, \"role\": \"admin\", \"demandeur\": \"admintest\", \"cible\": \"stagetest\" }\n\nLe SuperAdmin recoit un email avec boutons APPROUVER / REFUSER.\nSi approuve : n8n appelle POST /api/users/:id/role (JWT superadmin,\nRBAC verifie cote serveur, action tracee dans audit.log).\n\n1. URLs pré-remplies pour Docker local (host.docker.internal:3000) ;\nau déploiement, remplacer par l'adresse réelle de l'app\n2. Configurer le credential SMTP dans les noeuds Email\n3. Mot de passe via $env.FORTERESSE_API_PASSWORD (variable du conteneur)\n4. Necessite n8n >= 1.5 (noeud Email \"Send and Wait\")",
         "height": 340,
         "width": 420
       },
