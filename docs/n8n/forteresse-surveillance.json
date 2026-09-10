@@ -114,9 +114,9 @@
       "parameters": {
         "fromEmail": "secops@forteresse.local",
         "toEmail": "equipe-secops@exemple.fr",
-        "subject": "=ALERTE SecOps Forteresse : {{ $json.alertes.length }} evenement(s) critique(s)",
-        "emailFormat": "text",
-        "text": "={{ $json.alertes.map(a => '[' + a.severite.toUpperCase() + '] ' + a.type + ' (par ' + a.qui + ') : ' + JSON.stringify(a.details)).join('\\n') }}",
+        "subject": "=🛡️ [Forteresse] {{ $json.alertes.length }} alerte(s) sécurité",
+        "emailFormat": "html",
+        "html": "<div style=\"font-family:Arial,sans-serif;max-width:640px;\"><div style=\"background:#1e3a5f;color:#ffffff;padding:14px 18px;border-radius:8px 8px 0 0;\"><h2 style=\"margin:0;\">🛡️ Alerte SecOps — Forteresse</h2><p style=\"margin:6px 0 0;font-size:14px;\">{{ $json.alertes.length }} événement(s) détecté(s) par la surveillance automatique</p></div><table style=\"width:100%;border-collapse:collapse;font-size:13px;\"><tr style=\"background:#f1f5f9;\"><th style=\"text-align:left;padding:8px;border:1px solid #cbd5e1;\">Sévérité</th><th style=\"text-align:left;padding:8px;border:1px solid #cbd5e1;\">Événement</th><th style=\"text-align:left;padding:8px;border:1px solid #cbd5e1;\">Acteur</th><th style=\"text-align:left;padding:8px;border:1px solid #cbd5e1;\">Détails</th></tr>{{ $json.alertes.map(a => { const sev = String(a.severite || 'info'); const col = {critical:'#dc2626',warning:'#ea580c',notice:'#2563eb'}[sev] || '#64748b'; const esc = (s) => String(s === undefined || s === null ? '—' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); return '<tr><td style=\"padding:8px;border:1px solid #cbd5e1;color:' + col + ';font-weight:bold;\">' + esc(sev.toUpperCase()) + '</td><td style=\"padding:8px;border:1px solid #cbd5e1;\">' + esc(a.type) + '</td><td style=\"padding:8px;border:1px solid #cbd5e1;\">' + esc(a.qui) + '</td><td style=\"padding:8px;border:1px solid #cbd5e1;font-family:monospace;font-size:11px;\">' + esc(JSON.stringify(a.details)) + '</td></tr>'; }).join('') }}</table><p style=\"color:#888888;font-size:11px;\">Généré automatiquement par le workflow « Surveillance SecOps » — journal d'audit Forteresse. Ne pas répondre.</p></div>",
         "options": {}
       },
       "id": "a1b2c3d4-0007-4000-8000-000000000007",
