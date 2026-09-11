@@ -58,6 +58,13 @@
         "emailFormat": "text",
         "message": "=Une demande d'elevation de privileges attend votre decision :\n\nDemandeur : {{ $('Demande Elevation').item.json.body.demandeur }}\nUtilisateur cible : {{ $('Demande Elevation').item.json.body.cible }} (id {{ $('Demande Elevation').item.json.body.userId }})\nRole demande : {{ $('Demande Elevation').item.json.body.role }}\n\nCette action sera appliquee via l'API Forteresse et tracee dans le journal d'audit.",
         "responseType": "approval",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double",
+            "approveLabel": "Approuver",
+            "disapproveLabel": "Refuser"
+          }
+        },
         "options": {
           "appendAttribution": false
         }

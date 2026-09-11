@@ -126,7 +126,7 @@ changement de rôle est appliqué via l'API.
 |---|---|---|---|
 | 1 | **Demande reçue** | Webhook | Method : POST<br>Body : `{ "userId": 2, "roleDemande": "admin", "demandeur": "admintest" }` |
 | 2 | **Préparer la demande** | Set | Message : « admintest demande le rôle admin pour stagetest — approuver ? » |
-| 3 | **Envoyer pour approbation** | Email/Teams + **Wait** (n8n) | Lien « Approuver » / « Refuser » (approval email n8n ou formulaire) |
+| 3 | **Envoyer pour approbation** | Email/Teams + **Wait** (n8n) | Lien « Approuver » / « Refuser » (approval email n8n ou formulaire). **Réglage obligatoire** : dans le nœud, *Approval Options → Type of Approval = « Approve and Disapprove »* (le défaut n8n est *Approve Only* : sans ça, aucun bouton Refuser n'apparaît et la branche Refus ne sert jamais) |
 | 4a | **Si approuvé** | HTTP Request | POST `https://<ton-app>/api/users/{{userId}}/role`<br>Header : `Authorization: Bearer <jeton du workflow 1>`<br>Body : `{ "role": "{{roleDemande}}" }` |
 | 4b | **Si refusé** | NoOp | Rien (la demande expire, rien n'est changé) |
 | 5 | **Confirmer** | Email | Résultat de l'opération (nouveau rôle ou refus) |
