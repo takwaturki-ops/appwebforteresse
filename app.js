@@ -24,7 +24,6 @@ const authRoutes = require("./routes/auth");
 const totpRoutes = require("./routes/totp");
 const adminRoutes = require("./routes/admin");
 const apiRoutes = require("./routes/api");
-const vitrineRoutes = require("./routes/vitrine");
 const { requireAuth } = require("./middleware/auth");
 const { journaliserRequete } = require("./utils/audit");
 
@@ -202,7 +201,6 @@ app.use("/", authRoutes);   // /login, /logout (etape 1 : mot de passe)
 app.use("/", totpRoutes);   // /2fa/*, /login/totp (etape 2 : code TOTP)
 app.use("/", adminRoutes);  // /admin/* (RBAC : requireRole par route)
 app.use("/", apiRoutes);    // /api/* (JWT : scripts et n8n)
-app.use("/", vitrineRoutes); // /vitrine (page publique de demonstration)
 
 app.get("/dashboard", requireAuth, (req, res) => {
   res.render("dashboard");
