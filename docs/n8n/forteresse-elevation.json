@@ -158,17 +158,6 @@
       "main": [
         [
           {
-            "node": "Login API (JWT)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Login API (JWT)": {
-      "main": [
-        [
-          {
             "node": "Approbation SuperAdmin",
             "type": "main",
             "index": 0
@@ -191,7 +180,7 @@
       "main": [
         [
           {
-            "node": "Appliquer le role",
+            "node": "Login API (JWT)",
             "type": "main",
             "index": 0
           }
@@ -199,6 +188,17 @@
         [
           {
             "node": "Refus",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Login API (JWT)": {
+      "main": [
+        [
+          {
+            "node": "Appliquer le role",
             "type": "main",
             "index": 0
           }

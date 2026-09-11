@@ -139,6 +139,10 @@ changement de rôle est appliqué via l'API.
   et chaque application est tracée dans `audit.log` (`via: "api"`)
 - Un humain (le SuperAdmin) reste dans la boucle : rien n'est automatique
   sans approbation explicite
+- Le login JWT a lieu **après** l'approbation (pas avant) : le jeton
+  (15 min) est ainsi toujours frais au moment de l'appliquer — sinon
+  une approbation lente ferait expirer le jeton avant usage (constaté
+  en test : 401 sur "Appliquer le role")
 
 ---
 
