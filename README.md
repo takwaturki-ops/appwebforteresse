@@ -135,6 +135,24 @@ views/                 templates EJS (échappement automatique)
 docs/n8n-workflows.md  workflows n8n documentés
 ```
 
+## Où est la sécurité dans le code ?
+
+| Concept | Fichier | Rôle |
+|---|---|---|
+| En-têtes HTTP / CSP | `app.js` | `helmet`, `img-src self + data:` pour le QR 2FA |
+| Sessions web durcies | `app.js` | store PG, `HttpOnly, SameSite=Strict, Secure prod, 30 min` |
+| Parsing | `app.js` | `urlencoded` (formulaires) + `json 16kb` (API) -> `req.body` |
+| CSRF | `app.js`, `views/*.ejs` | token `_csrf` double-submit cookie, exempt `/api/*` |
+| Login + bcrypt | `routes/auth.js`, `models/user.js` | coût 12, message générique + `HASH_FACTICE` anti-énumération |
+| 2FA TOTP | `routes/totp.js` | QR + code 6 chiffres `window:1`, `regenerate()` anti-fixation |
+| Gardes session | `middleware/auth.js` | `requireAuth` (complète), `requirePending2FA` (demi-session) |
+| RBAC web | `routes/admin.js`, `middleware/role.js` | 3 rôles, 403 + `ACCESS_DENIED`, anti-escalade / anti self-change |
+| API JWT | `routes/api.js`, `middleware/jwt.js` | HS256 15 min, `Authorization: Bearer`, `requireJwt + requireRoleApi` |
+| Anti brute-force | `middleware/ratelimit.js`, `app.js` | 5 échecs -> bloc 15 min (429) + global 300 req/15 min |
+| Audit | `utils/audit.js`, `logs/audit.log` | JSON-lines append-only, lu par `/admin/audit` et `/api/audit` |
+| Anti-XSS vues | `views/*.ejs` | `<%= %>` échappé, jamais `<%- %>` sur données user |
+| Secrets | `.env` / `.env.example` | `SESSION_SECRET, JWT_SECRET, CSRF_SECRET, DATABASE_URL` |
+
 ## Limites connues (assumées)
 
 - Le compte d'automatisation `n8n-bot` n'a pas de 2FA (les machines ne
