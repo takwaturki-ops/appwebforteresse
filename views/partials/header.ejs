@@ -1,22 +1,62 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><%= titre %> | Forteresse</title>
   <link rel="stylesheet" href="/style.css">
+  <!--
+    ui.js charge dans <head> (sans defer) pour appliquer le theme
+    memorise AVANT le premier rendu : pas de flash clair/sombre.
+    100 % externe -> compatible avec la CSP Helmet (script-src 'self').
+  -->
+  <script src="/ui.js"></script>
 </head>
 <body>
-  <header class="bandeau">
-    <span class="logo">Forteresse</span>
-    <nav>
-      <% if (session && session.userId) { %>
-        <span>Connecte : <%= session.username %> (<%= session.role %>)</span>
-        <form method="POST" action="/logout" class="inline">
-          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-          <button type="submit" class="lien">Deconnexion</button>
-        </form>
-      <% } %>
-    </nav>
-  </header>
-  <main class="contenu">
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Navigation principale">
+      <div class="sidebar-logo">
+        <span class="sidebar-logo-icone" aria-hidden="true">&#x1F3F0;</span>
+        <span class="sidebar-logo-texte">Forteresse</span>
+      </div>
+      <nav class="sidebar-nav">
+        <% if (session && session.userId) { %>
+          <a class="nav-lien" href="/dashboard">&#x1F4CA; Tableau de bord</a>
+          <% if (session.role === "admin" || session.role === "superadmin") { %>
+            <a class="nav-lien" href="/admin/users">&#x1F465; Utilisateurs</a>
+          <% } %>
+          <% if (session.role === "superadmin") { %>
+            <a class="nav-lien" href="/admin/audit">&#x1F4DC; Journal d'audit</a>
+          <% } %>
+        <% } else { %>
+          <span class="nav-hint">Application SecOps &mdash; connectez-vous pour acc&eacute;der au tableau de bord.</span>
+        <% } %>
+      </nav>
+      <div class="sidebar-pied">
+        <small>SecOps &mdash; Node.js + PostgreSQL</small>
+      </div>
+    </aside>
+    <div class="sidebar-voile" id="sidebarVoile" aria-hidden="true"></div>
+
+    <div class="principal">
+      <header class="topbar">
+        <button type="button" class="icone-btn burger" id="boutonSidebar" aria-label="Ouvrir le menu">&#9776;</button>
+        <span class="topbar-titre"><%= titre %></span>
+        <span class="topbar-espace"></span>
+        <button type="button" class="icone-btn" id="boutonTheme" aria-label="Basculer jour / nuit">&#9790;</button>
+        <% if (session && session.userId) { %>
+          <!-- NB : <%= %> echappe username/role (defense XSS, Lecon 5) -->
+          <span class="topbar-user"><%= session.username %></span>
+          <span class="badge badge-<%= session.role %>"><%= session.role %></span>
+          <form method="POST" action="/logout" class="inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn-deconnexion">D&eacute;connexion</button>
+          </form>
+        <% } %>
+      </header>
+      <!--
+        large=true -> mise en page elargie (dashboard).
+        Les pages existantes n'envoient pas "large" : le typeof evite
+        le ReferenceError et elles gardent la largeur 640px.
+      -->
+      <main class="<%= (typeof large !== 'undefined' && large) ? 'contenu contenu-large' : 'contenu' %>">

@@ -61,6 +61,20 @@
       403 + alerte pour les autres roles) - exigence "SuperAdmin consulte
       les logs" desormais tenue cote web ET API ; lecture extraite dans
       utils/audit.lireDerniersEvenements (partagee avec /api/audit)
+- [x] Phase 10 : dashboard dynamique - sidebar/topbar + dark mode (localStorage,
+      100% externe, CSP OK), cartes stats reelles (utils/dashboard-stats.js :
+      users par role, sessions PG, ping BDD, agregats audit), 3 graphiques
+      Chart.js vendu en local (public/vendor), endpoint JSON /dashboard/stats
+      + refresh auto 30 s, nav selon role ; pages existantes intactes
+- [x] Phase 10 (suite) : page /admin/audit pro - filtres serveur (niveau,
+      action whitelistee, recherche, listes blanches), pagination bornee
+      (20/50/100, liens conservant les filtres), bandeau compteurs 24 h,
+      mise en page elargie ; XSS teste sur q/usernames/details
+- [x] Phase 10 (suite 2) : page /admin/users pro - recherche ILIKE
+      username/email, filtres role + 2FA, tri colonnes (username/email/role,
+      ORDER BY whitelist), pagination bornee, bandeau repartition ;
+      re-affichage anti-self-change corrige (nouvelles vars) ; injection
+      SQL via q neutralisee (testee), RBAC et CSRF inchanges
 - [ ] Reste utilisateur : recree les workflows dans n8n Azure (tunnel
       cloudflared ou VM), screenshots livrables (QR 2FA, code mobile,
       dashboard, 429, audit.log), rapport final, CLARIFIER avec

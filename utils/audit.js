@@ -79,3 +79,63 @@ function lireDerniersEvenements(limite = 100) {
 }
 
 module.exports = { journaliser, journaliserRequete, lireDerniersEvenements };
+
+// =============================================================
+// FILTRAGE POUR LA PAGE /admin/audit (Phase 10)
+//
+// Tous les parametres viennent de l'URL (?niveau=&action=&q=) :
+// ils sont valides ici par LISTES BLANCHES, jamais reutilises
+// tels quels (un niveau inconnu = filtre ignore, pas d'erreur).
+// Retourne les evenements du PLUS ANCIEN au plus recent (meme
+// convention que lireDerniersEvenements : la route inverse).
+// =============================================================
+
+const NIVEAUX_VALIDES = ["info", "notice", "warning", "critical"];
+
+// Actions tracées par l'application (README) : seules celles-ci
+// sont proposées dans le filtre et acceptees depuis l'URL.
+const ACTIONS_CONNUES = [
+  "LOGIN_SUCCESS",
+  "LOGIN_FAILED",
+  "TOTP_FAILED",
+  "LOGOUT",
+  "ACCESS_DENIED",
+  "CSRF_BLOCKED",
+  "USER_CREATED",
+  "ROLE_CHANGED",
+  "PRIVILEGE_ESCALATION_BLOCKED",
+  "RATE_LIMIT_BLOCAGE",
+  "API_LOGIN_SUCCESS",
+  "API_LOGIN_FAILED",
+  "API_ACCESS_DENIED",
+];
+
+const LIGNES_MAX_FILTRE = 2000; // borne anti-abus (fichier potentiellement gros)
+const RECHERCHE_MAX = 64; // idem (username / IP / action)
+
+// { niveau?, action?, recherche? } -> [evenements filtres]
+function filtrerEvenements({ niveau, action, recherche } = {}) {
+  const niveauOk = NIVEAUX_VALIDES.includes(niveau) ? niveau : null;
+  const actionOk = ACTIONS_CONNUES.includes(action) ? action : null;
+  const rechercheOk =
+    typeof recherche === "string" && recherche.trim() !== ""
+      ? recherche.trim().slice(0, RECHERCHE_MAX).toLowerCase()
+      : null;
+
+  return lireDerniersEvenements(LIGNES_MAX_FILTRE).filter((e) => {
+    if (!e) return false;
+    if (niveauOk && e.level !== niveauOk) return false;
+    if (actionOk && e.action !== actionOk) return false;
+    if (rechercheOk) {
+      // Recherche insensible a la casse sur acteur, IP et action.
+      // (Comparaison en minuscules ; l'affichage reste echappe par EJS.)
+      const cible = `${e.username || ""} ${e.ip || ""} ${e.action || ""}`.toLowerCase();
+      if (!cible.includes(rechercheOk)) return false;
+    }
+    return true;
+  });
+}
+
+module.exports.filtrerEvenements = filtrerEvenements;
+module.exports.NIVEAUX_VALIDES = NIVEAUX_VALIDES;
+module.exports.ACTIONS_CONNUES = ACTIONS_CONNUES;

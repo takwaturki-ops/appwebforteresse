@@ -29,6 +29,7 @@ router.get("/login", (req, res) => {
 // gardeAntiBruteForce : IP bloquee apres 5 echecs -> 429 sans executer
 // la route (le mot de passe n'est meme pas examine).
 router.post("/login", gardeAntiBruteForce, async (req, res) => {
+  
   const { username, password } = req.body;
 
   // Message d'erreur VOLONTAIREMENT generique (anti enumeration de comptes)
@@ -40,7 +41,7 @@ router.post("/login", gardeAntiBruteForce, async (req, res) => {
   const refuser = (raison) => {
     journaliserRequete(req, {
       action: "LOGIN_FAILED",
-      level: "warning",
+      level: "warning",                                                    
       username: username || null,
       details: { etape: "mot_de_passe", raison },
     });

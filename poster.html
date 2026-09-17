@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FORTERESSE — Poster Stage / Projet SecOps</title>
+<style>
+  :root{
+    --navy:#0f2043; --blue:#1a56db; --cyan:#06b6d4; --orange:#f97316;
+    --bg:#f1f5f9; --card:#ffffff; --muted:#64748b; --ok:#16a34a; --warn:#d97706; --crit:#dc2626;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:'Segoe UI',Arial,Helvetica,sans-serif; background:var(--bg); color:#0f172a;}
+  .toolbar{position:sticky; top:0; z-index:10; background:var(--navy); color:#fff; padding:12px 24px; display:flex; gap:12px; align-items:center; justify-content:space-between;}
+  .toolbar button{background:var(--orange); color:#fff; border:0; border-radius:8px; padding:10px 20px; font-size:15px; font-weight:700; cursor:pointer;}
+  .toolbar button.ghost{background:transparent; border:1px solid #fff;}
+  .poster{max-width:1400px; margin:24px auto; background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.15);}
+  header.hero{background:linear-gradient(135deg,#0f2043 0%,#1a56db 60%,#06b6d4 100%); color:#fff; padding:40px 48px 28px;}
+  header.hero h1{font-size:52px; letter-spacing:1px;}
+  header.hero h1 span{color:#fdba74;}
+  header.hero h2{font-size:22px; font-weight:400; margin-top:8px; opacity:.95;}
+  .badges{margin-top:16px; display:flex; flex-wrap:wrap; gap:8px;}
+  .badges span{background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.4); padding:6px 12px; border-radius:20px; font-size:13px;}
+  .meta{background:#0b1730; color:#cbd5e1; padding:14px 48px; font-size:15px; display:flex; gap:24px; flex-wrap:wrap;}
+  .meta b{color:#fff;}
+  .grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; padding:24px;}
+  .card{background:var(--card); border:1px solid #e2e8f0; border-radius:12px; padding:18px; break-inside:avoid;}
+  .card.full{grid-column:1/-1;}
+  .card h3{background:var(--navy); color:#fff; margin:-18px -18px 14px; padding:12px 18px; border-radius:12px 12px 0 0; font-size:18px; text-transform:uppercase; letter-spacing:.5px;}
+  .card h3.cyan{background:#0e7490;} .card h3.orange{background:#c2410c;} .card h3.green{background:#166534;}
+  .card p, .card li{font-size:14.5px; line-height:1.55;}
+  .card ul{padding-left:18px;}
+  .card li{margin-bottom:6px;}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin-top:8px;}
+  th{background:#0f2043; color:#fff; padding:8px; text-align:left;}
+  td{border:1px solid #e2e8f0; padding:7px 8px; vertical-align:top;}
+  tr:nth-child(even) td{background:#f8fafc;}
+  .flow{display:flex; align-items:stretch; gap:8px; margin-top:10px;}
+  .step{flex:1; background:#eff6ff; border:2px solid var(--blue); border-radius:10px; padding:10px; text-align:center; font-size:13px;}
+  .step b{display:block; font-size:14px; margin-bottom:4px;}
+  .arrow{align-self:center; font-size:22px; color:var(--blue); font-weight:bold;}
+  .arch{background:#0f172a; color:#e2e8f0; border-radius:10px; padding:14px; font-family:Consolas,monospace; font-size:13px; line-height:1.7; white-space:pre-wrap;}
+  code.inline{background:#f1f5f9; border:1px solid #e2e8f0; border-radius:4px; padding:1px 5px; font-size:13px;}
+  .log{background:#020617; color:#a5f3fc; border-radius:10px; padding:12px; font-family:Consolas,monospace; font-size:11.5px; overflow-x:auto; line-height:1.6;}
+  .pill{display:inline-block; padding:2px 8px; border-radius:12px; font-size:12px; font-weight:700;}
+  .p-ok{background:#dcfce7; color:#166534;} .p-warn{background:#fef3c7; color:#92400e;} .p-crit{background:#fee2e2; color:#991b1b;} .p-info{background:#dbeafe; color:#1e40af;}
+  .timeline{display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-top:10px;}
+  .tl{background:#f8fafc; border:1px solid #e2e8f0; border-left:5px solid var(--blue); border-radius:8px; padding:8px; font-size:12.5px;}
+  .tl b{font-size:13px;}
+  footer{background:var(--navy); color:#cbd5e1; padding:16px 48px; font-size:13px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+  @media(max-width:1000px){.grid{grid-template-columns:1fr 1fr;} header.hero h1{font-size:36px;}}
+  @media(max-width:700px){.grid{grid-template-columns:1fr;} .timeline{grid-template-columns:1fr 1fr;}}
+  @media print{
+    .toolbar{display:none;} body{background:#fff;} .poster{box-shadow:none; margin:0; max-width:none; border-radius:0;}
+    @page{size:A1 portrait; margin:10mm;}
+    .card{break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <div><b>FORTERESSE — Poster SecOps</b> &nbsp;|&nbsp; Impression A1/A0 ou Export PDF</div>
+  <div>
+    <button class="ghost" onclick="document.title='Poster-Fortresse';window.print()">🖨️ Imprimer / Exporter PDF</button>
+    <button onclick="window.print()">⬇ PDF A1</button>
+  </div>
+</div>
+
+<div class="poster">
+<header class="hero">
+  <h1>🛡️ FORTERESSE <span>— Application Web Sécurisée</span></h1>
+  <h2>Double authentification TOTP &nbsp;•&nbsp; RBAC 3 rôles &nbsp;•&nbsp; Durcissement OWASP &nbsp;•&nbsp; API JWT &nbsp;•&nbsp; Automatisation n8n</h2>
+  <div class="badges">
+    <span>Node.js 20 • Express 5 • EJS</span><span>PostgreSQL 18 • Sequelize</span>
+    <span>bcrypt coût 12</span><span>TOTP RFC 6238</span><span>JWT HS256 15 min</span>
+    <span>helmet • CSRF • rate-limit</span><span>WSL2 • n8n Azure</span>
+  </div>
+</header>
+<div class="meta">
+  <div>👤 <b>[Ton Nom]</b> — [Filière / École]</div>
+  <div>🎓 Encadrant : <b>[Nom Encadrant]</b></div>
+  <div>📅 2025 – 2026</div>
+  <div>🔗 github.com/takwaturki-ops/appwebforteresse</div>
+</div>
+
+<div class="grid">
+
+  <div class="card">
+    <h3>1 — Contexte & objectifs</h3>
+    <p><b>Projet pédagogique SecOps :</b> construire pas à pas une app de gestion d'infrastructure <b>hautement sécurisée</b>, sans Docker (app + PostgreSQL natifs sous <b>WSL2 Ubuntu</b>, n8n sur <b>Azure</b>).</p>
+    <ul>
+      <li><b>Apprendre</b> chaque mécanisme, pas juste l'empiler</li>
+      <li><b>Tester</b> par attaques réelles simulées</li>
+      <li><b>Tracer</b> chaque événement en audit</li>
+    </ul>
+    <p style="margin-top:8px"><span class="pill p-info">3 grands chantiers</span></p>
+    <ul>
+      <li><b>A.</b> App web + 2FA + RBAC + OWASP</li>
+      <li><b>B.</b> API REST JWT + journal d'audit</li>
+      <li><b>C.</b> Surveillance automatique n8n</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3 class="cyan">2 — Authentification en 2 étapes</h3>
+    <div class="flow">
+      <div class="step"><b>① Login</b>bcrypt 12<br>msg générique<br>+ HASH_FACTICE</div><div class="arrow">→</div>
+      <div class="step"><b>② ½-session</b>pending2fa<br>rien d'autre<br>accessible</div><div class="arrow">→</div>
+      <div class="step"><b>③ TOTP</b>QR code<br>6 chiffres / 30s<br>window:1</div><div class="arrow">→</div>
+      <div class="step"><b>④ Session</b>regenerate()<br>anti-fixation<br>cookie durci 30min</div>
+    </div>
+    <ul style="margin-top:10px">
+      <li>Cookie : <code class="inline">HttpOnly; SameSite=Strict; Secure(prod)</code></li>
+      <li>Sessions en <b>PostgreSQL</b> : survivent au reboot, révocables</li>
+      <li>Sans code 2FA → <b>aucune page</b> accessible</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3 class="orange">3 — RBAC 3 rôles</h3>
+    <table>
+      <tr><th>Rôle</th><th>Droits</th><th>Compte démo</th></tr>
+      <tr><td><b>stagiaire</b></td><td>Lecture seule</td><td><code class="inline">stagetest</code></td></tr>
+      <tr><td><b>admin</b></td><td>Gère users standards</td><td><code class="inline">admintest</code></td></tr>
+      <tr><td><b>superadmin</b></td><td>Rôles + audit</td><td><code class="inline">turki</code> + <code class="inline">n8n-bot</code> (API)</td></tr>
+    </table>
+    <ul style="margin-top:8px">
+      <li>Vérification <b>serveur</b> sur chaque route → <span class="pill p-warn">403 + ACCESS_DENIED</span></li>
+      <li>Admin forge <code class="inline">role=superadmin</code> → <span class="pill p-crit">400 + ESCALATION_BLOCKED</span></li>
+      <li>Anti self-change : on ne change pas son propre rôle</li>
+    </ul>
+  </div>
+
+  <div class="card full">
+    <h3>4 — Durcissement OWASP : mécanisme / défense / preuve d'attaque bloquée</h3>
+    <table>
+      <tr><th>Attaque</th><th>Défense implémentée</th><th>Preuve (test rejoué)</th></tr>
+      <tr><td><b>Injection SQL</b></td><td>Sequelize ORM, requêtes paramétrées</td><td><code class="inline">' OR '1'='1' --</code> + <code class="inline">DROP TABLE</code> → 401, base intacte</td></tr>
+      <tr><td><b>XSS</b></td><td>EJS <code class="inline">&lt;%= %&gt;</code> échappé + CSP helmet</td><td><code class="inline">&lt;img onerror=...&gt;</code> affiché en texte</td></tr>
+      <tr><td><b>CSRF</b></td><td>Jetons sync. double-submit cookie + SameSite</td><td>POST sans jeton → 403 + <code class="inline">CSRF_BLOCKED</code></td></tr>
+      <tr><td><b>Brute force</b></td><td>5 échecs (web OU API) → bloc IP 15 min + global 300 req/15 min</td><td>5e échec → 429 + <code class="inline">Retry-After: 900</code>, même bon mdp bloqué</td></tr>
+      <tr><td><b>Fixation session</b></td><td><code class="inline">req.session.regenerate()</code> à la promotion</td><td>ID session change après login</td></tr>
+      <tr><td><b>API forgée</b></td><td>JWT HS256 15 min, <code class="inline">Authorization: Bearer</code></td><td>Jeton falsifié → 401 (HMAC)</td></tr>
+      <tr><td><b>Mots de passe</b></td><td>bcrypt coût 12, salt unique, jamais en clair</td><td><code class="inline">SELECT password_hash</code> → <code class="inline">$2b$12$...</code></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3 class="green">5 — Architecture</h3>
+    <div class="arch">Navigateur
+  ↓ helmet(CSP) + rate-limit 300/15min
+  ↓ sessions PG + CSRF double-submit
+  ↓ auth 2 étapes (bcrypt → TOTP)
+  ↓ RBAC requireRole
+  ↓ PostgreSQL 18 (Sequelize)
+
+n8n Azure → API JWT → /api/users
+                       → /api/audit?limit=N</div>
+    <ul style="margin-top:8px">
+      <li><code class="inline">app.js</code> : chaîne middlewares</li>
+      <li><code class="inline">routes/</code> auth, totp, admin, api</li>
+      <li><code class="inline">middleware/</code> auth, role, jwt, ratelimit</li>
+      <li><code class="inline">utils/audit.js</code> + <code class="inline">logs/audit.log</code></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3 class="cyan">6 — Audit + API</h3>
+    <p><b>Audit :</b> 1 ligne JSON / événement, append-only. Lu via <code class="inline">/admin/audit</code> (web superadmin) et <code class="inline">/api/audit</code>.</p>
+    <div class="log">{"action":"RATE_LIMIT_BLOCAGE","level":"warning","username":"turki"}<br>{"action":"ACCESS_DENIED","username":"stagetest","chemin":"/admin/users"}<br>{"action":"PRIVILEGE_ESCALATION_BLOCKED","level":"critical","username":"admintest"}<br>{"action":"LOGIN_SUCCESS","username":"turki"}<br>{"action":"CSRF_BLOCKED","chemin":"/login"}</div>
+    <p style="margin-top:8px"><b>API :</b> <code class="inline">POST /api/login</code> → JWT 15 min → <code class="inline">GET /api/users</code>, <code class="inline">POST /api/users/:id/role</code>, <code class="inline">GET /api/audit</code>. Même RBAC + rate-limit que le web.</p>
+  </div>
+
+  <div class="card">
+    <h3 class="orange">7 — Automatisation n8n 🤖</h3>
+    <p><b>W1 — Surveillance</b> (toutes les 5 min) :</p>
+    <ul><li>Login JWT → <code class="inline">/api/audit?limit=100</code> → filtre JS → Email/Teams si alerte</li></ul>
+    <table><tr><th>Événement</th><th>Alerte</th></tr>
+    <tr><td>USER_CREATED admin</td><td><span class="pill p-info">NOUVEL_ADMIN</span></td></tr>
+    <tr><td>ROLE_CHANGED → admin</td><td><span class="pill p-info">ÉLÉVATION</span></td></tr>
+    <tr><td>RATE_LIMIT_BLOCAGE</td><td><span class="pill p-warn">BRUTE_FORCE</span></td></tr>
+    <tr><td>ESCALATION_BLOCKED</td><td><span class="pill p-crit">CRITICAL</span></td></tr></table>
+    <p style="margin-top:8px"><b>W2 — Validation à distance :</b> webhook → SuperAdmin approuve sur téléphone → <code class="inline">POST /role</code> via API. Test local : <code class="inline">node scripts/n8n-simulation.js</code> → 8 alertes détectées ✅</p>
+  </div>
+
+  <div class="card full">
+    <h3 class="green">8 — Progression L0 → Phase 9 + Résultats</h3>
+    <div class="timeline">
+      <div class="tl"><b>L0-L5</b><br>JS, Node/npm, Express, middlewares, POST+XSS, EJS</div>
+      <div class="tl"><b>Ph0-1</b><br>PG 18 + git + socle Express + sessions</div>
+      <div class="tl"><b>Ph2-3</b><br>bcrypt 12 + Sequelize + TOTP QR + regenerate</div>
+      <div class="tl"><b>Ph4-5</b><br>RBAC 3 rôles + anti-escalade + CSRF</div>
+      <div class="tl"><b>Ph6-7</b><br>Rate-limit 5→15min + audit complet</div>
+      <div class="tl"><b>Ph8</b><br>API JWT 15min + RBAC API</div>
+      <div class="tl"><b>Ph9</b><br>n8n 2 workflows + simulation locale</div>
+      <div class="tl"><b>+ Web audit</b><br>/admin/audit superadmin (sept. 2026)</div>
+      <div class="tl"><b>✅ Résultat</b><br>11 mécanismes, 0 contournement réussi</div>
+      <div class="tl"><b>⚠️ Limites</b><br>n8n-bot sans 2FA, rate-limit mémoire→Redis, pas de backup codes</div>
+    </div>
+  </div>
+
+</div>
+<footer>
+  <div>📦 Livrables : code + README + docs/n8n-workflows.md + audit.log + screenshots (QR 2FA, dashboard, 429, n8n)</div>
+  <div>Perspectives : tunnel cloudflared, n8n Azure prod (Key Vault), backup codes TOTP</div>
+</footer>
+</div>
+<p style="text-align:center;color:#64748b;font-size:13px;margin:16px">Astuce : Ctrl+P → Format A1 portrait → Marges minimales → « Enregistrer en PDF » pour envoyer à ton encadrant.</p>
+</body>
+</html>

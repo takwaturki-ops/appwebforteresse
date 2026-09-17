@@ -26,6 +26,7 @@ const adminRoutes = require("./routes/admin");
 const apiRoutes = require("./routes/api");
 const { requireAuth } = require("./middleware/auth");
 const { journaliserRequete } = require("./utils/audit");
+const { collecterStats } = require("./utils/dashboard-stats");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -202,8 +203,26 @@ app.use("/", totpRoutes);   // /2fa/*, /login/totp (etape 2 : code TOTP)
 app.use("/", adminRoutes);  // /admin/* (RBAC : requireRole par route)
 app.use("/", apiRoutes);    // /api/* (JWT : scripts et n8n)
 
-app.get("/dashboard", requireAuth, (req, res) => {
-  res.render("dashboard");
+app.get("/dashboard", requireAuth, async (req, res, next) => {
+  // Stats reelles calculees serveur (nombres echappes par <%= %>).
+  // Les graphiques sont hydrates en plus via /dashboard/stats.
+  try {
+    res.render("dashboard", { stats: await collecterStats(), heure: new Date().getHours() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Flux JSON pour le rafraichissement auto du dashboard (toutes les
+// 30 s cote client). GET + session complete : pas de CSRF requis
+// (pas de cookie modifie, pas d'effet de bord). Ne contient QUE des
+// compteurs et des evenements d'audit, jamais de donnees sensibles.
+app.get("/dashboard/stats", requireAuth, async (req, res, next) => {
+  try {
+    res.json(await collecterStats());
+  } catch (err) {
+    next(err);
+  }
 });
 
 // -------------------------------------------------------------

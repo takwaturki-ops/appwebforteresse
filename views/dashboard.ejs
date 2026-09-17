@@ -1,33 +1,110 @@
-<%- include("partials/header", { titre: "Tableau de bord" }) %>
+<%- include("partials/header", { titre: "Tableau de bord", large: true }) %>
 
-<div class="carte">
-  <h1>Tableau de bord</h1>
+<% const salutation = (typeof heure !== "undefined" && heure >= 18) || (typeof heure !== "undefined" && heure < 6) ? "Bonsoir" : "Bonjour"; %>
 
-  <!--
-    NB : <%= session.userId %> est echappe automatiquement par EJS.
-    Meme si un identifiant piege etait stocke, il serait affiche
-    comme du texte, jamais execute (defense XSS, Lecon 5).
-  -->
-  <p>Bonjour <strong><%= session.username %></strong>,
-     vous etes connecte avec le role <strong><%= session.role %></strong>.</p>
+<section class="hero">
+  <div>
+    <!-- NB : username/role echappes par <%= %> (defense XSS, Lecon 5) -->
+    <h1><%= salutation %> <%= session.username %></h1>
+    <p class="muted">Connect&eacute; avec le r&ocirc;le <strong><%= session.role %></strong> &mdash; voici l'&eacute;tat de votre forteresse en temps r&eacute;el.</p>
+  </div>
+  <span class="hero-pastille" id="pastille-fraicheur" title="Derniere actualisation">&#9679; en direct</span>
+</section>
 
-  <h2>Etat de l'infrastructure (demo)</h2>
-  <table>
-    <tr><th>Service</th><th>Etat</th></tr>
-    <tr><td>Serveur web</td><td>Operationnel</td></tr>
-    <tr><td>Base de donnees</td><td>Connectee (PostgreSQL)</td></tr>
-    <tr><td>Double authentification</td><td>Activee (TOTP)</td></tr>
-    <tr><td>Controle d'acces</td><td>RBAC - 3 roles</td></tr>
-  </table>
+<!-- Cartes de statistiques (nombres = <%= %> donc sans risque XSS) -->
+<section class="grille-stats" aria-label="Indicateurs">
+  <article class="stat-carte">
+    <span class="stat-icone" aria-hidden="true">&#x1F465;</span>
+    <div><p class="stat-valeur" id="stat-users"><%= stats.utilisateurs.total %></p><p class="stat-label">Utilisateurs</p></div>
+  </article>
+  <article class="stat-carte">
+    <span class="stat-icone" aria-hidden="true">&#x1F4E1;</span>
+    <div><p class="stat-valeur" id="stat-sessions"><%= stats.sessionsActives %></p><p class="stat-label">Sessions actives</p></div>
+  </article>
+  <article class="stat-carte <%= stats.audit.critiques24h > 0 ? 'stat-alerte' : '' %>" id="carte-alertes">
+    <span class="stat-icone" aria-hidden="true">&#x1F6A8;</span>
+    <div><p class="stat-valeur" id="stat-alertes"><%= stats.audit.critiques24h %></p><p class="stat-label">Alertes critiques (24 h)</p></div>
+  </article>
+  <article class="stat-carte">
+    <span class="stat-icone" aria-hidden="true">&#x1F512;</span>
+    <div><p class="stat-valeur" id="stat-totp"><%= stats.utilisateurs.totpActives %>/<%= stats.utilisateurs.total %></p><p class="stat-label">Comptes prot&eacute;g&eacute;s 2FA</p></div>
+  </article>
+</section>
 
-  <% if (session.role === "admin" || session.role === "superadmin") { %>
-    <h2>Administration</h2>
-    <p><a class="btn-lien" href="/admin/users">Gerer les utilisateurs</a></p>
-  <% } %>
+<!-- Graphiques Chart.js (donnees via /dashboard/stats, jamais injectees en HTML) -->
+<section class="grille-graphiques" aria-label="Graphiques">
+  <article class="carte graphique">
+    <h2>R&eacute;partition des r&ocirc;les</h2>
+    <div class="graphique-boite"><canvas id="graphRoles" height="220"></canvas></div>
+  </article>
+  <article class="carte graphique">
+    <h2>&Eacute;v&eacute;nements par s&eacute;v&eacute;rit&eacute; (24 h)</h2>
+    <div class="graphique-boite"><canvas id="graphSeverites" height="220"></canvas></div>
+  </article>
+  <article class="carte graphique graphique-large">
+    <h2>Connexions r&eacute;ussies &mdash; 7 derniers jours</h2>
+    <div class="graphique-boite"><canvas id="graphConnexions" height="120"></canvas></div>
+  </article>
+</section>
 
-  <% if (session.role === "superadmin") { %>
-    <p><a class="btn-lien" href="/admin/audit">Consulter le journal d'audit</a></p>
-  <% } %>
-</div>
+<section class="grille-bas">
+  <!-- Etat du systeme : donnees REELLES (ping PostgreSQL, compteurs) -->
+  <article class="carte">
+    <h2>&Eacute;tat du syst&egrave;me</h2>
+    <ul class="etat-liste">
+      <li><span>Serveur web</span><span class="etat-ok">&#9679; Op&eacute;rationnel</span></li>
+      <li>
+        <span>Base PostgreSQL</span>
+        <% if (stats.base.ok) { %>
+          <span class="etat-ok" id="db-etat">&#9679; Connect&eacute;e (<%= stats.base.latenceMs %> ms)</span>
+        <% } else { %>
+          <span class="etat-ko" id="db-etat">&#9679; Injoignable</span>
+        <% } %>
+      </li>
+      <li><span>Double authentification</span><span class="etat-ok">&#9679; TOTP actif</span></li>
+      <li><span>Contr&ocirc;le d'acc&egrave;s</span><span class="etat-ok">&#9679; RBAC &mdash; 3 r&ocirc;les</span></li>
+    </ul>
+  </article>
+
+  <!-- Activite recente : champs echappes un par un -->
+  <article class="carte">
+    <h2>Activit&eacute; r&eacute;cente</h2>
+    <% if (stats.audit.recents.length === 0) { %>
+      <p class="muted">Aucun &eacute;v&eacute;nement enregistr&eacute; pour le moment.</p>
+    <% } else { %>
+      <ul class="activite-liste" id="activite-liste">
+        <% stats.audit.recents.forEach(function(e) { %>
+          <li>
+            <span class="badge-level level-<%= e.level %>"><%= e.level %></span>
+            <span><strong><%= e.action %></strong> &mdash; <%= e.username || "-" %></span>
+          </li>
+        <% }); %>
+      </ul>
+    <% } %>
+  </article>
+
+  <!-- Actions rapides selon le role (liens existants conserves) -->
+  <article class="carte">
+    <h2>Actions rapides</h2>
+    <div class="actions-rapides">
+      <% if (session.role === "admin" || session.role === "superadmin") { %>
+        <a class="btn-lien" href="/admin/users">G&eacute;rer les utilisateurs</a>
+      <% } %>
+      <% if (session.role === "superadmin") { %>
+        <a class="btn-lien" href="/admin/audit">Consulter le journal d'audit</a>
+      <% } %>
+      <% if (session.role === "stagiaire") { %>
+        <p class="muted">Votre r&ocirc;le stagiaire est en lecture seule : aucune action d'administration disponible.</p>
+      <% } %>
+    </div>
+  </article>
+</section>
+
+<!--
+  Scripts 100 % externes (CSP) : Chart.js vendu en local + logique
+  du dashboard. Places AVANT le footer (qui ferme </body>).
+-->
+<script src="/vendor/chart.umd.min.js"></script>
+<script src="/dashboard-charts.js"></script>
 
 <%- include("partials/footer") %>

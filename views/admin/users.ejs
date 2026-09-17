@@ -1,4 +1,4 @@
-<%- include("../partials/header", { titre: "Utilisateurs" }) %>
+<%- include("../partials/header", { titre: "Utilisateurs", large: true }) %>
 
 <div class="carte">
   <h1>Utilisateurs</h1>
@@ -7,34 +7,110 @@
     <p class="alerte alerte-erreur"><%= erreur %></p>
   <% } %>
 
+  <!-- Repartition (compteurs serveur, sans risque XSS) -->
+  <section class="grille-stats stats-bandeau" aria-label="Répartition">
+    <article class="stat-carte stat-mini">
+      <div><p class="stat-valeur"><%= repartition.total %></p><p class="stat-label">Total</p></div>
+    </article>
+    <% ["stagiaire", "admin", "superadmin"].forEach(function(r) { %>
+      <article class="stat-carte stat-mini">
+        <div><p class="stat-valeur"><%= repartition.parRole[r] %></p><p class="stat-label"><%= r %></p></div>
+      </article>
+    <% }); %>
+    <article class="stat-carte stat-mini">
+      <div><p class="stat-valeur"><%= repartition.totpActives %>/<%= repartition.total %></p><p class="stat-label">2FA active</p></div>
+    </article>
+  </section>
+
+  <!--
+    Recherche + filtres en GET (aucun etat modifie -> pas de CSRF).
+    Valeurs re-remplies via <%= %> (echappe) et validees serveur.
+  -->
+  <form method="GET" action="/admin/users" class="filtres">
+    <label>Recherche
+      <input type="search" name="q" value="<%= filtres.q %>" maxlength="64" placeholder="identifiant ou email...">
+    </label>
+    <label>R&ocirc;le
+      <select name="role">
+        <option value="">Tous</option>
+        <% ["stagiaire", "admin", "superadmin"].forEach(function(r) { %>
+          <option value="<%= r %>" <%= filtres.role === r ? "selected" : "" %>><%= r %></option>
+        <% }); %>
+      </select>
+    </label>
+    <label>2FA
+      <select name="totp">
+        <option value="">Tous</option>
+        <option value="oui" <%= filtres.totp === "oui" ? "selected" : "" %>>Active</option>
+        <option value="non" <%= filtres.totp === "non" ? "selected" : "" %>>Non configur&eacute;e</option>
+      </select>
+    </label>
+    <label>Par page
+      <select name="limit">
+        <% limites.forEach(function(l) { %>
+          <option value="<%= l %>" <%= pagination.limite === l ? "selected" : "" %>><%= l %></option>
+        <% }); %>
+      </select>
+    </label>
+    <button type="submit">Filtrer</button>
+    <a class="btn-lien btn-secondaire" href="/admin/users">R&eacute;initialiser</a>
+  </form>
+
   <p><a class="btn-lien" href="/admin/users/new">+ Nouvel utilisateur</a></p>
 
-  <table>
-    <tr><th>Identifiant</th><th>Email</th><th>Role</th><th>2FA</th><th>Actions</th></tr>
-    <% users.forEach(function(u) { %>
+  <p class="muted"><strong><%= pagination.total %></strong> compte(s)
+     &mdash; page <%= pagination.page %> / <%= pagination.pages %></p>
+
+  <% if (users.length === 0) { %>
+    <p>Aucun compte ne correspond aux filtres.</p>
+  <% } else { %>
+    <table>
       <tr>
-        <td><%= u.username %><% if (u.id === monId) { %> <em>(vous)</em><% } %></td>
-        <td><%= u.email %></td>
-        <td><span class="badge badge-<%= u.Role.name %>"><%= u.Role.name %></span></td>
-        <td><%= u.totpEnabled ? "active" : "non configuree" %></td>
-        <td>
-          <% if (session.role === "superadmin" && u.id !== monId) { %>
-            <form method="POST" action="/admin/users/<%= u.id %>/role" class="inline">
-              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-              <select name="role">
-                <option value="stagiaire" <%= u.Role.name === "stagiaire" ? "selected" : "" %>>stagiaire</option>
-                <option value="admin" <%= u.Role.name === "admin" ? "selected" : "" %>>admin</option>
-                <option value="superadmin" <%= u.Role.name === "superadmin" ? "selected" : "" %>>superadmin</option>
-              </select>
-              <button type="submit" class="petit">Changer</button>
-            </form>
-          <% } else { %>
-            <span class="muted">-</span>
-          <% } %>
-        </td>
+        <% [["username", "Identifiant"], ["email", "Email"], ["role", "R\u00f4le"]].forEach(function([col, label]) { %>
+          <% const actif = filtres.tri === col; const prochainSens = (actif && filtres.sens === "asc") ? "desc" : "asc"; %>
+          <th>
+            <a class="tri-lien" href="/admin/users?<%= qsBase %><%= qsBase ? '&' : '' %>tri=<%= col %>&sens=<%= prochainSens %>"><%= label %><% if (actif) { %><%= filtres.sens === "asc" ? " \u25B2" : " \u25BC" %><% } %></a>
+          </th>
+        <% }); %>
+        <th>2FA</th><th>Actions</th>
       </tr>
-    <% }); %>
-  </table>
+      <% users.forEach(function(u) { %>
+        <tr>
+          <td><%= u.username %><% if (u.id === monId) { %> <em>(vous)</em><% } %></td>
+          <td><%= u.email %></td>
+          <td><span class="badge badge-<%= u.Role.name %>"><%= u.Role.name %></span></td>
+          <td><%= u.totpEnabled ? "active" : "non configuree" %></td>
+          <td>
+            <% if (session.role === "superadmin" && u.id !== monId) { %>
+              <form method="POST" action="/admin/users/<%= u.id %>/role" class="inline">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <select name="role">
+                  <option value="stagiaire" <%= u.Role.name === "stagiaire" ? "selected" : "" %>>stagiaire</option>
+                  <option value="admin" <%= u.Role.name === "admin" ? "selected" : "" %>>admin</option>
+                  <option value="superadmin" <%= u.Role.name === "superadmin" ? "selected" : "" %>>superadmin</option>
+                </select>
+                <button type="submit" class="petit">Changer</button>
+              </form>
+            <% } else { %>
+              <span class="muted">-</span>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+    </table>
+
+    <% if (pagination.pages > 1) { %>
+      <nav class="pagination" aria-label="Pages des utilisateurs">
+        <% if (pagination.page > 1) { %>
+          <a class="btn-lien btn-secondaire" href="/admin/users?<%= qsPage %><%= qsPage ? '&' : '' %>page=<%= pagination.page - 1 %>">&larr; Pr&eacute;c&eacute;dent</a>
+        <% } %>
+        <span class="muted">Page <%= pagination.page %> / <%= pagination.pages %></span>
+        <% if (pagination.page < pagination.pages) { %>
+          <a class="btn-lien btn-secondaire" href="/admin/users?<%= qsPage %><%= qsPage ? '&' : '' %>page=<%= pagination.page + 1 %>">Suivant &rarr;</a>
+        <% } %>
+      </nav>
+    <% } %>
+  <% } %>
 </div>
 
 <%- include("../partials/footer") %>

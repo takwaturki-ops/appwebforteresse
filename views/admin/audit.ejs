@@ -1,14 +1,61 @@
-<%- include("../partials/header", { titre: "Journal d'audit" }) %>
+<%- include("../partials/header", { titre: "Journal d'audit", large: true }) %>
 
 <div class="carte">
   <h1>Journal d'audit</h1>
 
-  <p class="muted">Les 100 derniers &eacute;v&eacute;nements sensibles, du plus r&eacute;cent
-     au plus ancien. Journal en ajout seul (append-only) : il ne peut
+  <p class="muted">Journal en ajout seul (append-only) : il ne peut
      &ecirc;tre ni modifi&eacute; ni supprim&eacute; depuis l'application.</p>
 
+  <!-- Bandeau 24 h (compteurs calcules serveur, nombres = sans risque) -->
+  <section class="grille-stats stats-bandeau" aria-label="Dernières 24 heures">
+    <% ["info", "notice", "warning", "critical"].forEach(function(n) { %>
+      <article class="stat-carte stat-mini">
+        <div><p class="stat-valeur"><%= stats24h[n] %></p><p class="stat-label"><%= n %> (24 h)</p></div>
+      </article>
+    <% }); %>
+  </section>
+
+  <!--
+    Filtres en GET : aucune modification d'etat -> pas de jeton CSRF
+    requis. Chaque champ est re-rempli via <%= %> (echappe) et les
+    valeurs sont validees cote serveur par listes blanches.
+  -->
+  <form method="GET" action="/admin/audit" class="filtres">
+    <label>S&eacute;v&eacute;rit&eacute;
+      <select name="niveau">
+        <option value="">Toutes</option>
+        <% niveaux.forEach(function(n) { %>
+          <option value="<%= n %>" <%= filtres.niveau === n ? "selected" : "" %>><%= n %></option>
+        <% }); %>
+      </select>
+    </label>
+    <label>Action
+      <select name="action">
+        <option value="">Toutes</option>
+        <% actions.forEach(function(a) { %>
+          <option value="<%= a %>" <%= filtres.action === a ? "selected" : "" %>><%= a %></option>
+        <% }); %>
+      </select>
+    </label>
+    <label>Recherche
+      <input type="search" name="q" value="<%= filtres.recherche %>" maxlength="64" placeholder="utilisateur, IP, action...">
+    </label>
+    <label>Par page
+      <select name="limit">
+        <% limites.forEach(function(l) { %>
+          <option value="<%= l %>" <%= pagination.limite === l ? "selected" : "" %>><%= l %></option>
+        <% }); %>
+      </select>
+    </label>
+    <button type="submit">Filtrer</button>
+    <a class="btn-lien btn-secondaire" href="/admin/audit">R&eacute;initialiser</a>
+  </form>
+
+  <p class="muted"><strong><%= pagination.total %></strong> &eacute;v&eacute;nement(s)
+     &mdash; page <%= pagination.page %> / <%= pagination.pages %></p>
+
   <% if (evenements.length === 0) { %>
-    <p>Aucun &eacute;v&eacute;nement enregistr&eacute; pour le moment.</p>
+    <p>Aucun &eacute;v&eacute;nement ne correspond aux filtres.</p>
   <% } else { %>
     <table class="table-audit">
       <tr>
@@ -32,6 +79,19 @@
         </tr>
       <% }); %>
     </table>
+
+    <!-- Pagination : liens GET qui conservent les filtres (qs echappe) -->
+    <% if (pagination.pages > 1) { %>
+      <nav class="pagination" aria-label="Pages du journal">
+        <% if (pagination.page > 1) { %>
+          <a class="btn-lien btn-secondaire" href="/admin/audit?<%= qs %><%= qs ? '&' : '' %>page=<%= pagination.page - 1 %>">&larr; Pr&eacute;c&eacute;dent</a>
+        <% } %>
+        <span class="muted">Page <%= pagination.page %> / <%= pagination.pages %></span>
+        <% if (pagination.page < pagination.pages) { %>
+          <a class="btn-lien btn-secondaire" href="/admin/audit?<%= qs %><%= qs ? '&' : '' %>page=<%= pagination.page + 1 %>">Suivant &rarr;</a>
+        <% } %>
+      </nav>
+    <% } %>
   <% } %>
 </div>
 
